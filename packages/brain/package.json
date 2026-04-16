@@ -18,5 +18,8 @@
   "dependencies": {
     "@mem-ria/core": "workspace:*"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.0.0"
+  }
 }

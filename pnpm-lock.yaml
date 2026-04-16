@@ -26,6 +26,10 @@ importers:
       '@mem-ria/core':
         specifier: workspace:*
         version: link:../core
+    devDependencies:
+      '@types/better-sqlite3':
+        specifier: ^7.0.0
+        version: 7.6.13
 
   packages/cli:
     dependencies:
