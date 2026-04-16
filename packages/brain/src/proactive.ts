@@ -108,13 +108,20 @@ export function createProactive(
           .filter(Boolean)
           .join('\n')
 
-        const briefingText = await config.llm.synthesize(
-          BRIEFING_PROMPT,
-          userPrompt,
-          { maxTokens: 512 },
-        )
+        let briefingText: string
+        try {
+          briefingText = await config.llm.synthesize(
+            BRIEFING_PROMPT,
+            userPrompt,
+            { maxTokens: 512 },
+          )
+        } catch (e) {
+          console.warn('[mem-ria proactive] LLM synthesis failed for event:', event.title, (e as Error).message)
+          skipped++
+          continue
+        }
 
-        if (!briefingText.trim()) {
+        if (!briefingText?.trim()) {
           skipped++
           continue
         }

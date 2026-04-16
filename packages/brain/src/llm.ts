@@ -34,6 +34,10 @@ export function anthropicAdapter(
         content: Array<{ type: string; text?: string }>
       }
 
+      if (!json.content || json.content.length === 0) {
+        throw new Error('Anthropic: empty content in response')
+      }
+
       return json.content
         .filter((b) => b.type === 'text')
         .map((b) => b.text ?? '')
@@ -75,6 +79,10 @@ export function openaiAdapter(
         choices: Array<{ message: { content: string | null } }>
       }
 
+      if (!json.choices || json.choices.length === 0) {
+        throw new Error('OpenAI: empty choices in response')
+      }
+
       return json.choices[0]?.message.content ?? ''
     },
   }
@@ -111,6 +119,10 @@ export function googleAdapter(
         candidates: Array<{
           content: { parts: Array<{ text?: string }> }
         }>
+      }
+
+      if (!json.candidates || json.candidates.length === 0) {
+        throw new Error('Google: empty candidates in response')
       }
 
       return (

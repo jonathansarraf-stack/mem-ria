@@ -135,8 +135,9 @@ export function createReplay(mem: MemRia, config: ReplayConfig): Replay {
         synthesis = await llm.synthesize(systemPrompt, userPrompt, {
           maxTokens: 400,
         })
-      } catch {
-        continue // LLM failed for this group, skip
+      } catch (e) {
+        console.warn('[mem-ria replay] LLM synthesis failed for entity:', displayName, (e as Error).message)
+        continue
       }
 
       if (!synthesis) continue

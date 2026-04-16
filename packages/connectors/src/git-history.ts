@@ -1,6 +1,6 @@
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
-import { execSync } from 'node:child_process'
+import { execFileSync } from 'node:child_process'
 import type { MemRia } from '@mem-ria/core'
 import type { Connector } from './types.js'
 
@@ -40,10 +40,10 @@ function isGitRepo(dir: string): boolean {
 }
 
 function getGitCommits(repoPath: string, maxCommits: number, since?: string): GitCommit[] {
-  const sinceArg = since ? `--since="${since}"` : ''
-  const cmd = `git -C "${repoPath}" log --max-count=${maxCommits} ${sinceArg} --format="%H%n%an%n%ae%n%aI%n%s%n%b%x00"`
+  const args = ['-C', repoPath, 'log', `--max-count=${maxCommits}`, '--format=%H%n%an%n%ae%n%aI%n%s%n%b%x00']
+  if (since) args.push(`--since=${since}`)
   try {
-    const output = execSync(cmd, { encoding: 'utf8', timeout: 15000, maxBuffer: 10 * 1024 * 1024 })
+    const output = execFileSync('git', args, { encoding: 'utf8', timeout: 15000, maxBuffer: 10 * 1024 * 1024 })
     return parseGitLog(output)
   } catch {
     return []

@@ -114,13 +114,19 @@ export function createConsolidator(
           )
           .join('\n\n---\n\n')
 
-        const mergedBody = await config.llm.synthesize(
-          CONSOLIDATION_PROMPT,
-          `Entity: "${candidate.entity}"\n\nFragments:\n\n${transcript}`,
-          { maxTokens: 1024 },
-        )
+        let mergedBody: string
+        try {
+          mergedBody = await config.llm.synthesize(
+            CONSOLIDATION_PROMPT,
+            `Entity: "${candidate.entity}"\n\nFragments:\n\n${transcript}`,
+            { maxTokens: 1024 },
+          )
+        } catch (e) {
+          console.warn('[mem-ria consolidator] LLM synthesis failed for entity:', candidate.entity, (e as Error).message)
+          continue
+        }
 
-        if (!mergedBody.trim()) continue
+        if (!mergedBody?.trim()) continue
 
         // Upsert the consolidated entry using the mem API
         const resultId = mem.upsert({

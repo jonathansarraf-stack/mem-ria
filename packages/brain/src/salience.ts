@@ -103,19 +103,17 @@ export function createSalience(mem: MemRia, config?: SalienceConfig): Salience {
     }
 
     // 3. Explicit importance tags
+    let tags: string[] = []
     try {
-      const tags = Array.isArray(entry.tags)
-        ? entry.tags
-        : typeof entry.tags === 'string'
-          ? JSON.parse(entry.tags as string)
-          : []
-      const importantCount = (tags as string[]).filter((t) => {
+      tags = Array.isArray(entry.tags) ? entry.tags : typeof entry.tags === 'string' ? JSON.parse(entry.tags as string) : []
+      if (!Array.isArray(tags)) tags = []
+    } catch { tags = [] }
+    {
+      const importantCount = tags.filter((t) => {
         const lower = String(t).toLowerCase()
         return importantTags.some((it) => lower.includes(it))
       }).length
       score += importantCount * 3.0
-    } catch {
-      /* ignore */
     }
 
     // 4. Kind-based prior

@@ -58,7 +58,7 @@ export function createMCPServer(config: MCPServerConfig) {
         source: 'mcp',
         title,
         body,
-        kind: kind as any,
+        kind,
         tags,
         entity,
         scope,
@@ -103,7 +103,9 @@ export function createMCPServer(config: MCPServerConfig) {
       const memText = memories.slice(0, 10).map(m =>
         `- (${m.kind}/${m.source}) ${m.title}: ${m.body?.slice(0, 200) || ''}`
       ).join('\n')
-      const text = `**${entity.canonical_name}** (${entity.type})\nAliases: ${JSON.parse((entity.aliases as string) || '[]').join(', ') || 'none'}\n\n**Memories (${memories.length}):**\n${memText}`
+      let aliasesStr = 'none'
+      try { aliasesStr = JSON.parse((entity.aliases as string) || '[]').join(', ') || 'none' } catch { /* malformed */ }
+      const text = `**${entity.canonical_name}** (${entity.type})\nAliases: ${aliasesStr}\n\n**Memories (${memories.length}):**\n${memText}`
       return { content: [{ type: 'text' as const, text }] }
     }
   )

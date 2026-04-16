@@ -155,7 +155,7 @@ export function parseTemporalFilter(query: string): {
 
 // --- Decay scoring ---
 export function decayScore(updated: number): number {
-  const days = (Date.now() - updated) / (24 * 60 * 60 * 1000)
+  const days = Math.max(0, (Date.now() - updated) / (24 * 60 * 60 * 1000))
   return 1 / (1 + days / 90) // half-life ~90 days
 }
 
@@ -168,7 +168,7 @@ function rowToEntry(r: Record<string, unknown>): MemoryEntry {
     title: r.title as string,
     body: r.body as string,
     kind: (r.kind as MemoryEntry['kind']) || 'note',
-    tags: r.tags ? JSON.parse(r.tags as string) : [],
+    tags: r.tags ? (() => { try { const parsed = JSON.parse(r.tags as string); return Array.isArray(parsed) ? parsed : []; } catch { return []; } })() : [],
     entity: (r.entity as string) || undefined,
     scope: (r.scope as string) || 'global',
     created: r.created as number,
@@ -230,9 +230,10 @@ export function createSQLiteStore(dbPath: string): StorageAdapter {
 
   function search(query: string, opts: SearchOptions = {}): SearchResult[] {
     if (!query || !query.trim()) return []
-    const limit = opts.limit || 20
+    const limit = Math.min(opts.limit || 20, 200)
     const { from, label, cleaned } = parseTemporalFilter(query)
     const effectiveQuery = cleaned || query
+    if (!effectiveQuery.trim()) return []
 
     const safe = effectiveQuery.replace(/"/g, '""')
     const match = `"${safe}"*`
@@ -261,7 +262,7 @@ export function createSQLiteStore(dbPath: string): StorageAdapter {
       const rows = db.prepare(sql).all(...args) as Record<string, unknown>[]
       const scored = rows.map((r) => {
         const decay = decayScore(r.updated as number)
-        const salience = (r.salience as number) || 0
+        const salience = Math.max(0, (r.salience as number) || 0)
         const salienceBoost = 1 + Math.log(1 + salience)
         return {
           ...rowToEntry(r),
@@ -274,14 +275,16 @@ export function createSQLiteStore(dbPath: string): StorageAdapter {
       })
       scored.sort((a, b) => b.finalScore - a.finalScore)
       return scored.slice(0, limit)
-    } catch {
+    } catch (e) {
+      console.warn('[mem-ria] search error:', e)
       return []
     }
   }
 
   function byEntity(name: string, scope?: string): MemoryEntry[] {
-    let sql = 'SELECT * FROM memory_index WHERE (entity = ? OR entity LIKE ?) '
-    const args: unknown[] = [name, '%' + name + '%']
+    const escapedName = name.replace(/%/g, '\\%').replace(/_/g, '\\_')
+    let sql = 'SELECT * FROM memory_index WHERE (entity = ? OR entity LIKE ? ESCAPE \'\\\') '
+    const args: unknown[] = [name, '%' + escapedName + '%']
     if (scope) {
       sql += 'AND (scope = ? OR scope = ?) '
       args.push(scope, 'global')

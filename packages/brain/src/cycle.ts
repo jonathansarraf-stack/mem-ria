@@ -30,10 +30,17 @@ export interface CycleModules {
   entities?: Entities
   consolidator?: Consolidator
   connectorScanFn?: (scope?: string) => Promise<{ count: number }>
+  mem?: { store: { raw(): unknown } }
 }
 
 function log(step: string, data: Record<string, unknown> = {}): CycleStep {
   return { step, ts: new Date().toISOString(), ...data }
+}
+
+function recordMeta(db: any, key: string) {
+  try {
+    db.prepare('INSERT OR REPLACE INTO mem_ria_metadata (key, value, updated) VALUES (?, ?, ?)').run(key, 'ok', Date.now())
+  } catch { /* table might not exist */ }
 }
 
 export async function runCycle(
@@ -42,12 +49,14 @@ export async function runCycle(
 ): Promise<CycleReport> {
   const startTime = Date.now()
   const steps: CycleStep[] = []
+  const db = modules.mem ? modules.mem.store.raw() : null
 
   // 0. Connectors scan
   if (modules.connectorScanFn) {
     try {
       const r = await modules.connectorScanFn(scope)
       steps.push(log('connectors', r))
+      if (db) recordMeta(db, 'last_rescan')
     } catch (e) {
       steps.push(log('connectors_error', { error: (e as Error).message }))
     }
@@ -80,6 +89,7 @@ export async function runCycle(
       const n = modules.salience.recomputeAll(scope)
       const pruned = modules.salience.pruneAccessLog(90)
       steps.push(log('salience', { recomputed: n, accessLogPruned: pruned }))
+      if (db) recordMeta(db, 'last_salience')
     } catch (e) {
       steps.push(log('salience_error', { error: (e as Error).message }))
     }
@@ -93,6 +103,7 @@ export async function runCycle(
       const byReason: Record<string, number> = {}
       for (const c of cands) byReason[c.reason] = (byReason[c.reason] || 0) + 1
       steps.push(log('prune', { marked, byReason }))
+      if (db) recordMeta(db, 'last_prune')
     } catch (e) {
       steps.push(log('prune_error', { error: (e as Error).message }))
     }
@@ -103,6 +114,7 @@ export async function runCycle(
     try {
       const r = await modules.embeddings.embedNew(scope)
       steps.push(log('embeddings', r))
+      if (db) recordMeta(db, 'last_embeddings')
     } catch (e) {
       steps.push(log('embeddings_error', { error: (e as Error).message }))
     }

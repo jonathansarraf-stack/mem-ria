@@ -29,7 +29,12 @@ interface Config {
 
 function loadConfig(): Config {
   if (existsSync(CONFIG_PATH)) {
-    return JSON.parse(readFileSync(CONFIG_PATH, 'utf8'))
+    try {
+      return JSON.parse(readFileSync(CONFIG_PATH, 'utf8'))
+    } catch {
+      console.warn('[mem-ria] Config file corrupted, using defaults')
+      return { mode: 'personal' as const, dbPath: BRAIN_DB_PATH }
+    }
   }
   return { mode: 'personal', dbPath: BRAIN_DB_PATH }
 }
@@ -112,7 +117,8 @@ program
     const config = loadConfig()
     const { mem, brain } = createBrainFromConfig(config)
     if (opts.http) {
-      console.error(`[mem-ria] HTTP API at http://localhost:${opts.port} (coming soon)`)
+      const { startServer } = await import('@mem-ria/server')
+      startServer({ mem, brain, port: parseInt(opts.port) })
     }
     brain.start()
     console.error('[mem-ria] Brain scheduler started (daily cycle)')

@@ -33,6 +33,10 @@ export function openaiEmbeddings(
         data: Array<{ embedding: number[] }>
       }
 
+      if (!json.data?.length) {
+        throw new Error('OpenAI Embeddings: empty data in response')
+      }
+
       return json.data[0].embedding
     },
   }
@@ -68,6 +72,10 @@ export function geminiEmbeddings(
         embedding: { values: number[] }
       }
 
+      if (!json.embedding?.values) {
+        throw new Error('Gemini Embeddings: missing embedding values in response')
+      }
+
       return json.embedding.values
     },
   }
@@ -100,6 +108,10 @@ export function voyageEmbeddings(
 
       const json = (await res.json()) as {
         data: Array<{ embedding: number[] }>
+      }
+
+      if (!json.data?.length) {
+        throw new Error('Voyage Embeddings: empty data in response')
       }
 
       return json.data[0].embedding

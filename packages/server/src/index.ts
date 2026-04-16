@@ -47,7 +47,12 @@ export function createApp(config: ServerConfig) {
   // --- Memory CRUD ---
 
   app.post('/api/memory', async (c) => {
-    const body = await c.req.json<UpsertInput>()
+    let body: UpsertInput
+    try {
+      body = await c.req.json<UpsertInput>()
+    } catch {
+      return c.json({ error: 'Invalid JSON body' }, 400)
+    }
     const scope = resolveScope(c)
     const id = mem.upsert({ ...body, scope: body.scope || scope })
     return c.json({ id })
@@ -55,7 +60,8 @@ export function createApp(config: ServerConfig) {
 
   app.get('/api/memory/search', (c) => {
     const q = c.req.query('q') || ''
-    const limit = parseInt(c.req.query('limit') || '10')
+    const rawLimit = parseInt(c.req.query('limit') || '10')
+    const limit = Number.isFinite(rawLimit) ? Math.min(Math.max(rawLimit, 1), 200) : 10
     const scope = resolveScope(c)
     const results = mem.search(q, { limit, scope })
     return c.json({ results, total: results.length })
@@ -82,7 +88,12 @@ export function createApp(config: ServerConfig) {
 
   app.post('/api/memory/extract', async (c) => {
     if (!extractor) return c.json({ error: 'Extractor not configured' }, 501)
-    const body = await c.req.json<{ userMessage: string; agentResponse: string; agentId?: string }>()
+    let body: { userMessage: string; agentResponse: string; agentId?: string }
+    try {
+      body = await c.req.json<{ userMessage: string; agentResponse: string; agentId?: string }>()
+    } catch {
+      return c.json({ error: 'Invalid JSON body' }, 400)
+    }
     const facts = await extractor.process(body)
     return c.json({ facts, saved: facts.filter(f => f.saved).length })
   })
