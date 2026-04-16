@@ -97,6 +97,9 @@ importers:
 
   packages/server:
     dependencies:
+      '@hono/node-server':
+        specifier: ^1.19.14
+        version: 1.19.14(hono@4.12.14)
       '@mem-ria/brain':
         specifier: workspace:*
         version: link:../brain
@@ -110,7 +113,7 @@ importers:
         specifier: workspace:*
         version: link:../extractor
       hono:
-        specifier: ^4.0.0
+        specifier: ^4.12.14
         version: 4.12.14
 
 packages:
