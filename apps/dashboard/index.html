@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>mem-ria dashboard</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a0a;color:#e0e0e0;font-family:'JetBrains Mono','Fira Code',monospace;font-size:14px;padding:20px}
+a{color:#6366f1;text-decoration:none}
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.header h1{font-size:18px;color:#6366f1}
+.header small{color:#666;font-size:11px}
+.tabs{display:flex;gap:4px;margin-bottom:20px;border-bottom:1px solid #333;padding-bottom:8px}
+.tab{padding:8px 16px;cursor:pointer;border-radius:6px 6px 0 0;color:#888;font-size:13px;border:1px solid transparent}
+.tab:hover{color:#e0e0e0}
+.tab.active{color:#6366f1;border-color:#333;border-bottom-color:#0a0a0a;background:#1a1a1a}
+.page{display:none}.page.active{display:block}
+.card{background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:16px;margin-bottom:16px}
+.card h3{font-size:13px;color:#888;margin-bottom:12px;text-transform:uppercase;letter-spacing:1px}
+.big-num{font-size:48px;font-weight:bold;color:#6366f1}
+.big-num small{font-size:14px;color:#888;font-weight:normal}
+.row{display:flex;gap:16px;flex-wrap:wrap}
+.row>.card{flex:1;min-width:220px}
+/* bars */
+.bar-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.bar-label{width:90px;text-align:right;font-size:12px;color:#aaa;flex-shrink:0}
+.bar-track{flex:1;height:18px;background:#222;border-radius:4px;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px;transition:width .3s}
+.bar-val{width:40px;font-size:12px;color:#888}
+/* health lights */
+.lights{display:flex;gap:16px;flex-wrap:wrap}
+.light{display:flex;align-items:center;gap:8px;font-size:13px}
+.dot{width:14px;height:14px;border-radius:50%;flex-shrink:0}
+.dot.green{background:#22c55e}.dot.yellow{background:#eab308}.dot.red{background:#ef4444}.dot.gray{background:#555}
+/* badges */
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;color:#fff;margin-right:4px}
+.badge-decision{background:#7c3aed}.badge-fact{background:#3b82f6}.badge-person{background:#22c55e}
+.badge-project{background:#f97316}.badge-note{background:#666}.badge-episode{background:#ec4899}
+/* search */
+.search-bar{display:flex;gap:8px;margin-bottom:16px}
+.search-bar input{flex:1;padding:10px 14px;background:#111;border:1px solid #333;border-radius:6px;color:#e0e0e0;font-family:inherit;font-size:14px;outline:none}
+.search-bar input:focus{border-color:#6366f1}
+.search-bar button,.btn{padding:10px 18px;background:#6366f1;color:#fff;border:none;border-radius:6px;cursor:pointer;font-family:inherit;font-size:13px}
+.search-bar button:hover,.btn:hover{background:#4f46e5}
+.result{padding:12px 0;border-bottom:1px solid #222}
+.result .title{font-weight:bold;margin-bottom:4px}
+.result .meta{font-size:12px;color:#888;margin-bottom:4px}
+.result .snippet{font-size:13px;color:#aaa}
+/* table */
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:8px;border-bottom:1px solid #333;color:#888;font-weight:normal;text-transform:uppercase;font-size:11px;letter-spacing:1px}
+td{padding:8px;border-bottom:1px solid #1f1f1f}
+tr:hover td{background:#111}
+tr.clickable{cursor:pointer}
+/* health detail */
+.check-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #222}
+.check-row .msg{flex:1;font-size:13px}
+.overall{display:flex;align-items:center;gap:16px;margin-bottom:20px}
+.overall .dot{width:28px;height:28px}
+.overall .label{font-size:20px;font-weight:bold}
+.back-link{font-size:12px;color:#6366f1;cursor:pointer;margin-bottom:12px;display:inline-block}
+.empty{color:#555;font-style:italic;padding:20px 0}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>mem-ria</h1>
+  <small id="refresh-ts">--</small>
+</div>
+<div class="tabs">
+  <div class="tab active" data-tab="overview">Overview</div>
+  <div class="tab" data-tab="search">Search</div>
+  <div class="tab" data-tab="entities">Entities</div>
+  <div class="tab" data-tab="health">Health</div>
+</div>
+
+<!-- OVERVIEW -->
+<div class="page active" id="p-overview">
+  <div class="row">
+    <div class="card"><h3>Total Memories</h3><div class="big-num" id="total-count">--</div></div>
+    <div class="card"><h3>Last Brain Cycle</h3><div id="last-cycle" style="font-size:16px;color:#aaa">--</div></div>
+  </div>
+  <div class="row">
+    <div class="card"><h3>By Source</h3><div id="source-bars"></div></div>
+    <div class="card"><h3>Salience Distribution</h3><div id="salience-bars"></div></div>
+  </div>
+  <div class="card"><h3>Health</h3><div class="lights" id="health-lights"></div></div>
+</div>
+
+<!-- SEARCH -->
+<div class="page" id="p-search">
+  <div class="search-bar">
+    <input id="q" placeholder="Search memories..." autocomplete="off">
+    <button onclick="doSearch()">Search</button>
+  </div>
+  <div id="search-results" class="card"><div class="empty">Type a query and press Search.</div></div>
+</div>
+
+<!-- ENTITIES -->
+<div class="page" id="p-entities">
+  <div id="entity-list" class="card"></div>
+  <div id="entity-detail" class="card" style="display:none"></div>
+</div>
+
+<!-- HEALTH -->
+<div class="page" id="p-health">
+  <div class="card">
+    <h3>Overall Status</h3>
+    <div class="overall"><div class="dot gray" id="overall-dot"></div><div class="label" id="overall-label">--</div></div>
+  </div>
+  <div class="card"><h3>Checks</h3><div id="health-checks"></div></div>
+</div>
+
+<script>
+const API = '';
+const BADGE_COLORS = {decision:'badge-decision',fact:'badge-fact',person:'badge-person',project:'badge-project',note:'badge-note',episode:'badge-episode'};
+
+// Tabs
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
+  document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(x => x.classList.remove('active'));
+  t.classList.add('active');
+  document.getElementById('p-' + t.dataset.tab).classList.add('active');
+}));
+
+async function api(path) {
+  try { const r = await fetch(API + path); return r.ok ? await r.json() : null; }
+  catch { return null; }
+}
+
+function badge(kind) {
+  const cls = BADGE_COLORS[kind] || 'badge-note';
+  return `<span class="badge ${cls}">${kind||'unknown'}</span>`;
+}
+
+function bars(container, items, color) {
+  const max = Math.max(...items.map(i => i.count), 1);
+  container.innerHTML = items.map(i => `
+    <div class="bar-row">
+      <div class="bar-label">${i.label}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${(i.count/max)*100}%;background:${color}"></div></div>
+      <div class="bar-val">${i.count}</div>
+    </div>`).join('');
+}
+
+function statusColor(s) {
+  if (!s) return 'gray';
+  const l = s.toLowerCase();
+  if (l === 'ok' || l === 'pass' || l === 'green' || l === 'healthy') return 'green';
+  if (l === 'warn' || l === 'warning' || l === 'yellow' || l === 'degraded') return 'yellow';
+  if (l === 'fail' || l === 'error' || l === 'red' || l === 'critical') return 'red';
+  return 'gray';
+}
+
+async function loadOverview() {
+  const [stats, health, salience] = await Promise.all([api('/api/memory/stats'), api('/api/brain/health'), api('/api/brain/salience')]);
+  if (stats) {
+    document.getElementById('total-count').innerHTML = `${stats.total ?? '--'} <small>memories</small>`;
+    const src = stats.bySource || {};
+    bars(document.getElementById('source-bars'), Object.entries(src).map(([k,v]) => ({label:k, count:v})), '#6366f1');
+  }
+  if (salience && salience.buckets) {
+    const colors = ['#ef4444','#f97316','#eab308','#3b82f6','#22c55e'];
+    document.getElementById('salience-bars').innerHTML = salience.buckets.map((b, i) => `
+      <div class="bar-row">
+        <div class="bar-label">${b.label || b.range || ('Bucket '+(i+1))}</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${(b.count/Math.max(...salience.buckets.map(x=>x.count),1))*100}%;background:${colors[i%5]}"></div></div>
+        <div class="bar-val">${b.count}</div>
+      </div>`).join('');
+  }
+  if (health) {
+    const el = document.getElementById('health-lights');
+    const checks = health.checks || [];
+    el.innerHTML = checks.map(c => `<div class="light"><div class="dot ${statusColor(c.status)}"></div>${c.name||c.dimension||'check'}</div>`).join('');
+    if (health.lastCycle) document.getElementById('last-cycle').textContent = new Date(health.lastCycle).toLocaleString();
+  }
+}
+
+async function doSearch() {
+  const q = document.getElementById('q').value.trim();
+  if (!q) return;
+  const el = document.getElementById('search-results');
+  el.innerHTML = '<div class="empty">Searching...</div>';
+  const data = await api('/api/memory/search?q=' + encodeURIComponent(q));
+  if (!data || !data.results || !data.results.length) { el.innerHTML = '<div class="empty">No results.</div>'; return; }
+  el.innerHTML = data.results.map(r => `
+    <div class="result">
+      <div class="title">${badge(r.kind)}${esc(r.title || r.subject || r.id || '--')}</div>
+      <div class="meta">source: ${esc(r.source||'--')} | score: ${(r.score??0).toFixed(2)}</div>
+      <div class="snippet">${esc(r.snippet || r.content || '--')}</div>
+    </div>`).join('');
+}
+document.getElementById('q').addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
+
+async function loadEntities() {
+  const data = await api('/api/entities');
+  const el = document.getElementById('entity-list');
+  document.getElementById('entity-detail').style.display = 'none';
+  if (!data || !data.entities || !data.entities.length) { el.innerHTML = '<div class="empty">No entities found.</div>'; return; }
+  el.innerHTML = `<table><thead><tr><th>Name</th><th>Type</th><th>Aliases</th><th>Mentions</th></tr></thead><tbody>
+    ${data.entities.map(e => `<tr class="clickable" onclick="showEntity('${esc(e.name||e.id)}')">`
+    + `<td>${esc(e.name||e.id)}</td><td>${esc(e.type||'--')}</td><td>${esc((e.aliases||[]).join(', ')||'--')}</td><td>${e.mentionCount??e.mentions??'--'}</td></tr>`).join('')}
+    </tbody></table>`;
+}
+
+async function showEntity(name) {
+  const el = document.getElementById('entity-detail');
+  el.style.display = 'block';
+  el.innerHTML = '<div class="empty">Loading...</div>';
+  const data = await api('/api/entities/' + encodeURIComponent(name));
+  if (!data) { el.innerHTML = '<div class="empty">Failed to load entity.</div>'; return; }
+  const ent = data.entity || {};
+  const mems = data.memories || [];
+  el.innerHTML = `<span class="back-link" onclick="this.parentElement.style.display='none'">&larr; back</span>
+    <h3>${esc(ent.name||name)} <span style="color:#888;font-size:12px">${esc(ent.type||'')}</span></h3>
+    <p style="color:#888;font-size:12px;margin:8px 0">Aliases: ${esc((ent.aliases||[]).join(', ')||'none')}</p>
+    ${mems.length ? mems.map(m => `<div class="result"><div class="title">${badge(m.kind)}${esc(m.title||m.subject||m.id||'--')}</div>
+      <div class="snippet">${esc(m.snippet||m.content||'--')}</div></div>`).join('') : '<div class="empty">No memories.</div>'}`;
+}
+
+async function loadHealth() {
+  const data = await api('/api/brain/health');
+  if (!data) return;
+  const dot = document.getElementById('overall-dot');
+  const label = document.getElementById('overall-label');
+  dot.className = 'dot ' + statusColor(data.overall);
+  label.textContent = (data.overall || 'unknown').toUpperCase();
+  const el = document.getElementById('health-checks');
+  const checks = data.checks || [];
+  el.innerHTML = checks.length ? checks.map(c => `
+    <div class="check-row">
+      <div class="dot ${statusColor(c.status)}"></div>
+      <div class="msg"><strong>${esc(c.name||c.dimension||'check')}</strong><br><span style="color:#888">${esc(c.message||c.detail||'--')}</span></div>
+    </div>`).join('') : '<div class="empty">No checks available.</div>';
+}
+
+function esc(s) { const d = document.createElement('div'); d.textContent = String(s); return d.innerHTML; }
+
+async function refresh() {
+  document.getElementById('refresh-ts').textContent = 'updated ' + new Date().toLocaleTimeString();
+  await Promise.all([loadOverview(), loadEntities(), loadHealth()]);
+}
+
+refresh();
+setInterval(refresh, 30000);
+</script>
+</body>
+</html>

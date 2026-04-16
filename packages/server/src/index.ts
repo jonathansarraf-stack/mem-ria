@@ -124,6 +124,30 @@ export function createApp(config: ServerConfig) {
 
   app.get('/healthz', (c) => c.json({ ok: true, ts: Date.now() }))
 
+  // --- Dashboard ---
+
+  app.get('/dashboard', async (c) => {
+    try {
+      const { readFileSync } = await import('node:fs')
+      const { join } = await import('node:path')
+      // Try multiple locations for the dashboard file
+      const locations = [
+        join(process.cwd(), 'apps', 'dashboard', 'index.html'),
+        join(process.cwd(), '..', '..', 'apps', 'dashboard', 'index.html'),
+        join(__dirname, '..', '..', '..', 'apps', 'dashboard', 'index.html'),
+      ]
+      for (const loc of locations) {
+        try {
+          const html = readFileSync(loc, 'utf8')
+          return c.html(html)
+        } catch { /* try next */ }
+      }
+      return c.text('Dashboard not found. Run from mem-ria root directory.', 404)
+    } catch {
+      return c.text('Dashboard error', 500)
+    }
+  })
+
   return app
 }
 
