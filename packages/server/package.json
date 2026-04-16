@@ -1,6 +1,6 @@
 {
   "name": "@mem-ria/server",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -23,5 +23,9 @@
     "@mem-ria/extractor": "workspace:*",
     "hono": "^4.12.14"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "files": [
+    "dist",
+    "LICENSE"
+  ]
 }

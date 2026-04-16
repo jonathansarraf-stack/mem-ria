@@ -24,12 +24,13 @@ afterEach(() => {
 })
 
 describe('Brain facade', () => {
-  it('instantiates with all modules', () => {
+  it('instantiates with all modules when adapters explicitly provided', () => {
     const brain = new Brain(mem, { llm: noopAdapter(), embeddingAdapter: noopEmbeddings() })
     expect(brain.salience).toBeTruthy()
     expect(brain.pruner).toBeTruthy()
     expect(brain.entities).toBeTruthy()
     expect(brain.insular).toBeTruthy()
+    // SDK users who pass adapters explicitly bypass license gate
     expect(brain.replay).toBeTruthy()
     expect(brain.consolidator).toBeTruthy()
     expect(brain.embeddings).toBeTruthy()

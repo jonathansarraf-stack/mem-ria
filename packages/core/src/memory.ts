@@ -2,6 +2,7 @@
 
 import { createSQLiteStore } from './store/sqlite.js'
 import { createPostgresStore } from './store/postgres.js'
+import { getPlan, LIMITS, type LicenseInfo } from './license.js'
 import type {
   MemRiaConfig,
   StorageAdapter,
@@ -16,9 +17,11 @@ import type {
 export class MemRia {
   private _store: StorageAdapter
   private _config: MemRiaConfig
+  private _license: LicenseInfo
 
   constructor(config: MemRiaConfig) {
     this._config = config
+    this._license = getPlan()
     if (config.storage === 'postgres') {
       this._store = createPostgresStore(config.connectionString || '')
     } else {
@@ -27,10 +30,24 @@ export class MemRia {
   }
 
   upsert(entry: UpsertInput): string {
+    const limit = LIMITS[this._license.plan].maxEntries
+    const current = this._store.stats(this._config.scope).total
+    if (current >= limit) {
+      const planName = this._license.plan === 'free' ? 'Free' : this._license.plan.charAt(0).toUpperCase() + this._license.plan.slice(1)
+      throw new Error(`${planName} plan limit (${limit} entries). Run \`mem-ria activate <key>\` to unlock.`)
+    }
     return this._store.upsert({
       ...entry,
       scope: entry.scope || this._config.scope || 'global',
     })
+  }
+
+  checkFeature(feature: keyof typeof LIMITS['free']): boolean {
+    return LIMITS[this._license.plan][feature] as boolean
+  }
+
+  get license(): LicenseInfo {
+    return this._license
   }
 
   search(query: string, opts?: SearchOptions): SearchResult[] {

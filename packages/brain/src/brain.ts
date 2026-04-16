@@ -2,6 +2,7 @@
 // Composes all brain modules into a single interface with scheduling
 
 import type { MemRia } from '@mem-ria/core'
+import { getPlan, LIMITS } from '@mem-ria/core'
 import { createSalience, type Salience, type SalienceConfig } from './salience.js'
 import { createPruner, type Pruner, type PrunerConfig } from './pruner.js'
 import { createEntities, type Entities, type EntitiesConfig } from './entities.js'
@@ -58,6 +59,12 @@ export class Brain {
     this._mem = mem
     this._config = config
 
+    // License gate only applies when NO explicit config is provided (CLI mode).
+    // SDK users who pass adapters explicitly get full access.
+    const license = getPlan()
+    const limits = LIMITS[license.plan]
+    const hasExplicitConfig = !!(config.llm || config.embeddingAdapter)
+
     this.salience = createSalience(mem, config.salience)
     this.pruner = createPruner(mem, config.pruner)
     this.entities = createEntities(mem, config.entities)
@@ -65,9 +72,12 @@ export class Brain {
 
     // Modules that need LLM
     const llm = config.llm
-    this.replay = llm
+    const canReplay = hasExplicitConfig || limits.replay
+    const canProactive = hasExplicitConfig || limits.proactive
+
+    this.replay = canReplay && llm
       ? createReplay(mem, { llm, ...config.replay })
-      : config.replay?.llm
+      : canReplay && config.replay?.llm
         ? createReplay(mem, { llm: config.replay.llm, ...config.replay })
         : null
 
@@ -77,17 +87,18 @@ export class Brain {
         ? createConsolidator(mem, { llm: config.consolidator.llm, ...config.consolidator })
         : null
 
-    this.proactive = llm
+    this.proactive = canProactive && llm
       ? createProactive(mem, { llm, ...config.proactive })
-      : config.proactive?.llm
+      : canProactive && config.proactive?.llm
         ? createProactive(mem, { llm: config.proactive.llm, ...config.proactive })
         : null
 
     // Modules that need embedding adapter
     const embAdapter = config.embeddingAdapter
-    this.embeddings = embAdapter
+    const canEmbed = hasExplicitConfig || limits.embeddings
+    this.embeddings = canEmbed && embAdapter
       ? createEmbeddings(mem, { adapter: embAdapter, ...config.embeddings })
-      : config.embeddings?.adapter
+      : canEmbed && config.embeddings?.adapter
         ? createEmbeddings(mem, { adapter: config.embeddings.adapter, ...config.embeddings })
         : null
   }
@@ -115,6 +126,11 @@ export class Brain {
 
   start(): void {
     if (this._timer) return
+    const license = getPlan()
+    if (!LIMITS[license.plan].scheduler) {
+      console.warn('[mem-ria brain] Scheduler requires starter plan or above. Run `mem-ria activate <key>` to unlock.')
+      return
+    }
     const interval = parseScheduleInterval(this._config.schedule?.cycle) || 24 * 60 * 60 * 1000
     this._timer = setInterval(() => {
       this.cycle().catch((e) => console.error('[mem-ria brain] cycle error:', e))

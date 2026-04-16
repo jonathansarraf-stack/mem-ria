@@ -2,7 +2,8 @@
 // mem-ria CLI — Command-line interface for mem-ria brain
 
 import { Command } from 'commander'
-import { createMemory } from '@mem-ria/core'
+import { createMemory, validateKey, getPlan, LIMITS } from '@mem-ria/core'
+import type { Plan } from '@mem-ria/core'
 import { Brain } from '@mem-ria/brain'
 import {
   ConnectorRegistry,
@@ -26,6 +27,7 @@ interface Config {
   dbPath: string
   scope?: string
   agents?: Array<{ id: string; scopes: string[] }>
+  licenseKey?: string
 }
 
 function loadConfig(): Config {
@@ -273,6 +275,56 @@ program
       saveConfig(config)
       console.log(`Set ${key} = ${value}`)
     }
+  })
+
+// --- activate ---
+program
+  .command('activate <key>')
+  .description('Activate a license key')
+  .action((key: string) => {
+    const result = validateKey(key)
+    if (!result.valid) {
+      console.error(`Invalid key: ${result.error}`)
+      process.exitCode = 1
+      return
+    }
+    const config = loadConfig()
+    config.licenseKey = key
+    saveConfig(config)
+    const expires = result.expires ? new Date(result.expires).toISOString().split('T')[0] : 'unknown'
+    console.log(`\nLicense activated!`)
+    console.log(`  Plan: ${result.plan}`)
+    console.log(`  Expires: ${expires}`)
+    const limits = LIMITS[result.plan]
+    console.log(`  Max entries: ${limits.maxEntries.toLocaleString()}`)
+    console.log(`  Features: ${Object.entries(limits).filter(([k, v]) => k !== 'maxEntries' && v).map(([k]) => k).join(', ') || 'none'}`)
+  })
+
+// --- plan ---
+program
+  .command('plan')
+  .description('Show current plan and limits')
+  .action(() => {
+    const info = getPlan(CONFIG_PATH)
+    console.log(`\nmem-ria plan\n`)
+    console.log(`  Plan: ${info.plan}`)
+    if (info.valid && info.expires) {
+      console.log(`  Expires: ${new Date(info.expires).toISOString().split('T')[0]}`)
+    } else if (info.plan === 'free') {
+      console.log(`  No license key. Using free plan.`)
+    } else if (info.error) {
+      console.log(`  Error: ${info.error}`)
+    }
+    const limits = LIMITS[info.plan]
+    console.log(`\n  Limits:`)
+    console.log(`    Max entries: ${limits.maxEntries.toLocaleString()}`)
+    console.log(`    Scheduler: ${limits.scheduler ? 'yes' : 'no'}`)
+    console.log(`    Embeddings: ${limits.embeddings ? 'yes' : 'no'}`)
+    console.log(`    Replay: ${limits.replay ? 'yes' : 'no'}`)
+    console.log(`    Proactive: ${limits.proactive ? 'yes' : 'no'}`)
+    console.log(`    HTTP API: ${limits.httpApi ? 'yes' : 'no'}`)
+    console.log(`    Multi-agent: ${limits.multiAgent ? 'yes' : 'no'}`)
+    console.log(`    Extractor: ${limits.extractor ? 'yes' : 'no'}`)
   })
 
 program.parse()
