@@ -1,0 +1,10 @@
+node_modules/
+dist/
+*.db
+*.db-shm
+*.db-wal
+.turbo/
+.env
+.env.*
+coverage/
+*.tsbuildinfo
