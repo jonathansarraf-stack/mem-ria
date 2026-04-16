@@ -98,6 +98,12 @@ export function createApp(config: ServerConfig) {
     return c.json({ results, total: results.length })
   })
 
+  // Stats must be before :id to avoid matching "stats" as an id
+  app.get('/api/memory/stats', (c) => {
+    const stats = mem.stats()
+    return c.json(stats)
+  })
+
   app.get('/api/memory/:id', (c) => {
     const entry = mem.get(c.req.param('id'))
     if (!entry) return c.json({ error: 'Not found' }, 404)
@@ -107,12 +113,6 @@ export function createApp(config: ServerConfig) {
   app.delete('/api/memory/:id', (c) => {
     mem.delete(c.req.param('id'))
     return c.json({ ok: true })
-  })
-
-  app.get('/api/memory/stats', (c) => {
-    const scope = resolveScope(c)
-    const stats = mem.stats()
-    return c.json(stats)
   })
 
   // --- Extractor ---
