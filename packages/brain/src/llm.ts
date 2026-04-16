@@ -26,8 +26,7 @@ export function anthropicAdapter(
       })
 
       if (!res.ok) {
-        const body = await res.text()
-        throw new Error(`Anthropic ${res.status}: ${body}`)
+        throw new Error(`Anthropic API error: ${res.status}`)
       }
 
       const json = (await res.json()) as {
@@ -71,8 +70,7 @@ export function openaiAdapter(
       })
 
       if (!res.ok) {
-        const body = await res.text()
-        throw new Error(`OpenAI ${res.status}: ${body}`)
+        throw new Error(`OpenAI API error: ${res.status}`)
       }
 
       const json = (await res.json()) as {
@@ -96,11 +94,11 @@ export function googleAdapter(
 ): LLMAdapter {
   return {
     async synthesize(system, user, opts) {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`
 
       const res = await fetch(url, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
         body: JSON.stringify({
           systemInstruction: { parts: [{ text: system }] },
           contents: [{ role: 'user', parts: [{ text: user }] }],
@@ -111,8 +109,7 @@ export function googleAdapter(
       })
 
       if (!res.ok) {
-        const body = await res.text()
-        throw new Error(`Google ${res.status}: ${body}`)
+        throw new Error(`Google API error: ${res.status}`)
       }
 
       const json = (await res.json()) as {

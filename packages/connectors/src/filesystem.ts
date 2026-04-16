@@ -1,4 +1,4 @@
-import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs'
+import { readFileSync, readdirSync, statSync, lstatSync, existsSync } from 'node:fs'
 import { join, relative, basename, extname } from 'node:path'
 import type { MemRia } from '@mem-ria/core'
 import type { Connector } from './types.js'
@@ -14,10 +14,11 @@ function walkDir(dir: string, extensions: string[], maxDepth = 10): string[] {
     for (const name of names) {
       if (name.startsWith('.')) continue
       const full = join(d, name)
-      let s: ReturnType<typeof statSync>
-      try { s = statSync(full) } catch { continue }
+      let s: ReturnType<typeof lstatSync>
+      try { s = lstatSync(full) } catch { continue }
+      if (s.isSymbolicLink()) continue
       if (s.isDirectory()) rec(full, depth + 1)
-      else if (s.isFile() && extensions.includes(extname(name).toLowerCase())) {
+      else if (s.isFile() && s.size <= 1024 * 1024 && extensions.includes(extname(name).toLowerCase())) {
         results.push(full)
       }
     }

@@ -1,4 +1,4 @@
-import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs'
+import { readFileSync, readdirSync, statSync, lstatSync, existsSync } from 'node:fs'
 import { join, basename } from 'node:path'
 import type { MemRia } from '@mem-ria/core'
 import type { Connector } from './types.js'
@@ -64,6 +64,12 @@ export const claudeMemoryConnector: Connector = {
     let count = 0
 
     for (const file of files) {
+      // Skip symlinks and large files
+      let ls: ReturnType<typeof lstatSync>
+      try { ls = lstatSync(file) } catch { continue }
+      if (ls.isSymbolicLink()) continue
+      if (ls.size > 1024 * 1024) continue
+
       let content: string
       try { content = readFileSync(file, 'utf8') } catch { continue }
       if (content.length < 10) continue
@@ -73,8 +79,7 @@ export const claudeMemoryConnector: Connector = {
       const type = frontmatter.type || 'unknown'
       const tags = ['claude-auto-memory', type]
 
-      let stat: ReturnType<typeof statSync> | null = null
-      try { stat = statSync(file) } catch { /* ignore */ }
+      const stat = ls
 
       mem.upsert({
         source: 'claude_memory',

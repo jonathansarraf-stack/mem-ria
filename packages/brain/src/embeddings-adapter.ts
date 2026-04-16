@@ -25,8 +25,7 @@ export function openaiEmbeddings(
       })
 
       if (!res.ok) {
-        const body = await res.text()
-        throw new Error(`OpenAI Embeddings ${res.status}: ${body}`)
+        throw new Error(`OpenAI Embeddings API error: ${res.status}`)
       }
 
       const json = (await res.json()) as {
@@ -53,19 +52,18 @@ export function geminiEmbeddings(
     model,
 
     async embed(text) {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:embedContent?key=${apiKey}`
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:embedContent`
 
       const res = await fetch(url, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
         body: JSON.stringify({
           content: { parts: [{ text }] },
         }),
       })
 
       if (!res.ok) {
-        const body = await res.text()
-        throw new Error(`Gemini Embeddings ${res.status}: ${body}`)
+        throw new Error(`Gemini Embeddings API error: ${res.status}`)
       }
 
       const json = (await res.json()) as {
@@ -102,8 +100,7 @@ export function voyageEmbeddings(
       })
 
       if (!res.ok) {
-        const body = await res.text()
-        throw new Error(`Voyage Embeddings ${res.status}: ${body}`)
+        throw new Error(`Voyage Embeddings API error: ${res.status}`)
       }
 
       const json = (await res.json()) as {

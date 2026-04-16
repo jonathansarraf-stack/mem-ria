@@ -249,9 +249,13 @@ program
   .command('config [key] [value]')
   .description('Show or set configuration')
   .action((key, value) => {
+    const ALLOWED_CONFIG_KEYS = ['mode', 'dbPath', 'scope']
     const config = loadConfig()
     if (!key) {
       console.log(JSON.stringify(config, null, 2))
+    } else if (!ALLOWED_CONFIG_KEYS.includes(key)) {
+      console.error(`Unknown config key: ${key}. Allowed: ${ALLOWED_CONFIG_KEYS.join(', ')}`)
+      return
     } else if (!value) {
       console.log((config as unknown as Record<string, unknown>)[key])
     } else {
