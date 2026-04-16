@@ -228,7 +228,10 @@ export function createInsular(
     let status: HealthStatus = 'green'
     let message = `${embedded}/${totalEntries} entries with embedding (${coverage}%)`
 
-    if (coverage < 50) {
+    if (embedded === 0 && totalEntries > 0) {
+      status = 'yellow'
+      message += ' -- no embeddings configured (optional: provide an EmbeddingAdapter)'
+    } else if (coverage < 50) {
       status = 'red'
       message += ' -- severe under-coverage!'
     } else if (coverage < 80) {

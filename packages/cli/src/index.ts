@@ -9,6 +9,7 @@ import {
   claudeMemoryConnector,
   claudeMdConnector,
   gitHistoryConnector,
+  markdownVaultConnector,
 } from '@mem-ria/connectors'
 import { startMCPServer } from '@mem-ria/mcp'
 import { readFileSync, writeFileSync, existsSync, mkdirSync, statSync } from 'node:fs'
@@ -81,6 +82,11 @@ program
     const registry = new ConnectorRegistry()
     registry.register(claudeMemoryConnector)
     registry.register(claudeMdConnector)
+    // Ingest .md files from the current project directory
+    registry.register(markdownVaultConnector, {
+      path: process.cwd(),
+      kindMapping: { 'decisions/': 'decision', 'decision/': 'decision', 'docs/': 'doc', 'people/': 'person' },
+    })
     if (isGitRepo(process.cwd())) {
       registry.register(gitHistoryConnector, { repos: [process.cwd()], maxCommits: 50 })
     }
@@ -198,6 +204,10 @@ program
     const registry = new ConnectorRegistry()
     registry.register(claudeMemoryConnector)
     registry.register(claudeMdConnector)
+    registry.register(markdownVaultConnector, {
+      path: process.cwd(),
+      kindMapping: { 'decisions/': 'decision', 'decision/': 'decision', 'docs/': 'doc', 'people/': 'person' },
+    })
     if (isGitRepo(process.cwd())) {
       registry.register(gitHistoryConnector, { repos: [process.cwd()], maxCommits: 100 })
     }

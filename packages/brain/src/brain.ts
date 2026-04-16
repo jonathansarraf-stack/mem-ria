@@ -103,6 +103,7 @@ export class Brain {
         consolidator: this.consolidator || undefined,
         embeddings: this.embeddings || undefined,
         connectorScanFn: this._config.connectorScanFn,
+        mem: this._mem,
       },
       scope
     )
