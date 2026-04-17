@@ -180,7 +180,8 @@ export function createBrainApiRoutes(): Hono {
         const db = (mem as any).store?.raw?.()
         if (!db) return { digest: '' }
 
-        const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
+        const days = parseInt(c.req.query('days') || '7') || 7
+        const sevenDaysAgo = Date.now() - days * 24 * 60 * 60 * 1000
 
         // Get recent memories
         const recent = db.prepare(`
@@ -249,9 +250,9 @@ export function createBrainApiRoutes(): Hono {
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 contents: [{ parts: [{ text:
-                  `You are a personal memory analyst. Below are someone's memories from the last 7 days. Write a SHORT natural-language summary (3-5 sentences max) in ${lang} describing what this person focused on, key events, important people mentioned, and any notable decisions or changes. Be warm and personal, use "you" (or "voce" in PT). Do NOT list items — write flowing prose. Do NOT mention technical details like "salience" or "memory types".\n\nMemories:\n${memoryContext}`
+                  `You are a personal memory analyst. Below are someone's memories from the last ${days} days. Write a natural-language summary (${days <= 7 ? '3-5' : days <= 30 ? '5-8' : '8-12'} sentences) in ${lang} describing what this person focused on, key events, important people mentioned, and any notable decisions or changes. ${days > 30 ? 'Identify overarching themes, patterns, and how priorities evolved over time.' : ''} Be warm and personal, use "you" (or "voce" in PT). Do NOT list items — write flowing prose. Do NOT mention technical details like "salience" or "memory types".\n\nMemories:\n${memoryContext}`
                 }] }],
-                generationConfig: { maxOutputTokens: 500, temperature: 0.7, thinkingConfig: { thinkingBudget: 0 } }
+                generationConfig: { maxOutputTokens: days <= 7 ? 500 : days <= 30 ? 800 : 1200, temperature: 0.7, thinkingConfig: { thinkingBudget: 0 } }
               })
             })
             const body = await res.text()
