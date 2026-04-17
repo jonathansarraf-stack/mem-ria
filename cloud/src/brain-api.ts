@@ -119,6 +119,56 @@ export function createBrainApiRoutes(): Hono {
     }
   })
 
+  // GET /graph — entities + co-occurrence edges for graph visualization
+  api.get('/graph', (c) => {
+    const { id } = c.get('user') as { id: string }
+    try {
+      return c.json(withBrain(id, (mem, brain) => {
+        const entities = brain.entities.list()
+        if (!entities.length) return { nodes: [], edges: [] }
+
+        const db = (mem as any).store?.raw?.()
+        if (!db) return { nodes: entities, edges: [] }
+
+        // Build co-occurrence: which entities appear in the same memories?
+        // mentions table has: entity_id, memory_id
+        const edges: Array<{ source: string; target: string; weight: number }> = []
+
+        try {
+          // Get all entity pairs that share at least one memory
+          const rows = db.prepare(`
+            SELECT m1.entity_id as e1, m2.entity_id as e2, COUNT(*) as weight
+            FROM mentions m1
+            JOIN mentions m2 ON m1.memory_id = m2.memory_id AND m1.entity_id < m2.entity_id
+            GROUP BY m1.entity_id, m2.entity_id
+            HAVING weight >= 1
+            ORDER BY weight DESC
+            LIMIT 200
+          `).all() as Array<{ e1: string; e2: string; weight: number }>
+
+          // Map entity IDs to names
+          const idToName: Record<string, string> = {}
+          for (const e of entities) {
+            idToName[e.id] = e.canonicalName
+          }
+
+          for (const r of rows) {
+            if (idToName[r.e1] && idToName[r.e2]) {
+              edges.push({ source: idToName[r.e1], target: idToName[r.e2], weight: r.weight })
+            }
+          }
+        } catch {
+          // mentions table might not exist, fall back to no edges
+        }
+
+        return { nodes: entities, edges }
+      }))
+    } catch (e: any) {
+      if (e.message === 'NO_BRAIN') return noBrainError(c)
+      throw e
+    }
+  })
+
   // POST /cycle — trigger brain cycle
   api.post('/cycle', async (c) => {
     const { id } = c.get('user') as { id: string }

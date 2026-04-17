@@ -663,38 +663,40 @@ function loadGraph() {
   const W = canvas.clientWidth, H = canvas.clientHeight;
   const tooltip = document.getElementById('graph-tooltip');
 
-  api('/api/brain/entities').then(data => {
-    if (!data || !data.entities || data.entities.length === 0) {
+  api('/api/brain/graph').then(data => {
+    if (!data || !data.nodes || data.nodes.length === 0) {
       ctx.fillStyle = '#4a4a55'; ctx.font = '14px Space Grotesk';
       ctx.textAlign = 'center'; ctx.fillText('No entities to visualize', W/2, H/2);
       return;
     }
 
-    const entities = data.entities.sort((a,b) => (b.mentionCount||0) - (a.mentionCount||0)).slice(0, 60);
+    const entities = data.nodes.sort((a,b) => (b.mentionCount||0) - (a.mentionCount||0)).slice(0, 60);
+    const nameToIdx = {};
 
     // Create nodes with velocity
     graphNodes = entities.map((e, i) => {
       const angle = (i / entities.length) * Math.PI * 2;
       const r = Math.min(W, H) * 0.3;
       const mentions = e.mentionCount || 1;
+      const name = e.canonicalName || e.name || '?';
+      nameToIdx[name] = i;
       return {
         x: W/2 + Math.cos(angle) * r * (0.3 + Math.random() * 0.7),
         y: H/2 + Math.sin(angle) * r * (0.3 + Math.random() * 0.7),
         vx: 0, vy: 0,
-        name: e.canonicalName || e.name || '?',
-        type: e.type || 'default',
+        name, type: e.type || 'default',
         size: Math.min(6 + Math.sqrt(mentions) * 3, 28),
         mentions, pinned: false
       };
     });
 
-    // Create edges (same type = connected, weighted by proximity in list)
+    // Create edges from real co-occurrence data
     graphEdges = [];
-    for (let i = 0; i < graphNodes.length; i++) {
-      for (let j = i+1; j < graphNodes.length; j++) {
-        if (graphNodes[i].type === graphNodes[j].type && graphNodes[i].type !== 'default') {
-          graphEdges.push({ source: i, target: j, strength: 0.3 });
-        }
+    const maxWeight = Math.max(...(data.edges || []).map(e => e.weight), 1);
+    for (const edge of (data.edges || [])) {
+      const si = nameToIdx[edge.source], ti = nameToIdx[edge.target];
+      if (si !== undefined && ti !== undefined) {
+        graphEdges.push({ source: si, target: ti, strength: 0.2 + (edge.weight / maxWeight) * 0.8, weight: edge.weight });
       }
     }
 
@@ -777,14 +779,15 @@ function loadGraph() {
       }
       if (cooling > 0.15) cooling *= 0.998;
 
-      // Draw edges
+      // Draw edges (thickness = co-occurrence weight)
       for (const e of graphEdges) {
         const a = graphNodes[e.source], b = graphNodes[e.target];
         const dist = Math.hypot(b.x-a.x, b.y-a.y);
-        if (dist > 250) continue; // only draw close edges
-        ctx.globalAlpha = Math.max(0.03, 0.15 - dist/2000);
-        ctx.strokeStyle = typeColors[a.type] || '#4a4a55';
-        ctx.lineWidth = 0.8;
+        if (dist > 400) continue;
+        const w = e.weight || 1;
+        ctx.globalAlpha = Math.min(0.5, 0.05 + w * 0.03);
+        ctx.strokeStyle = a.type === b.type ? (typeColors[a.type] || '#4a4a55') : 'rgba(197,255,61,0.6)';
+        ctx.lineWidth = Math.min(0.5 + w * 0.3, 4);
         ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
       }
       ctx.globalAlpha = 1;
