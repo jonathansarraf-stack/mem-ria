@@ -223,46 +223,62 @@ tr.clickable{cursor:pointer}
     <!-- OVERVIEW -->
     <div class="page active" id="p-overview">
       <!-- Hero KPIs -->
-      <div class="row" style="margin-bottom:24px">
-        <div class="card" style="background:linear-gradient(135deg,rgba(197,255,61,0.08),rgba(0,240,255,0.04));border-color:rgba(197,255,61,0.15)">
-          <h3>Total Memories</h3>
-          <div class="big-num" id="stat-total" style="font-size:56px">--</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px">
+        <div class="card" style="background:linear-gradient(135deg,rgba(197,255,61,0.1),transparent 70%);border-color:rgba(197,255,61,0.2);position:relative;overflow:hidden">
+          <div style="position:absolute;top:-30px;right:-30px;width:120px;height:120px;border-radius:50%;background:rgba(197,255,61,0.06);filter:blur(20px)"></div>
+          <h3 style="display:flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Memories</h3>
+          <div class="big-num" id="stat-total" style="font-size:52px">--</div>
+          <div id="stat-total-sparkline" style="height:30px;margin-top:8px;display:flex;align-items:flex-end;gap:2px"></div>
         </div>
         <div class="card" style="position:relative;overflow:hidden">
-          <div style="position:absolute;top:-20px;right:-20px;width:100px;height:100px;border-radius:50%;filter:blur(40px);opacity:0.3" id="health-glow"></div>
-          <h3>Brain Health</h3>
-          <div class="overall-big"><div class="dot gray" id="overview-health-dot" style="width:42px;height:42px"></div><div class="label" id="overview-health-label" style="font-size:32px">--</div></div>
+          <div style="position:absolute;top:-30px;right:-30px;width:120px;height:120px;border-radius:50%;filter:blur(30px);opacity:0.25" id="health-glow"></div>
+          <h3 style="display:flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Health</h3>
+          <div style="display:flex;align-items:center;gap:14px">
+            <div class="dot gray" id="overview-health-dot" style="width:48px;height:48px;flex-shrink:0;box-shadow:0 0 20px currentColor"></div>
+            <div>
+              <div id="overview-health-label" style="font-size:28px;font-weight:700;text-transform:uppercase">--</div>
+              <div id="overview-health-sub" style="font-size:11px;color:var(--mute);font-family:'JetBrains Mono',monospace">--</div>
+            </div>
+          </div>
         </div>
-        <div class="card">
-          <h3>Entities</h3>
-          <div class="big-num" id="stat-entities" style="color:var(--accent2)">--</div>
+        <div class="card" style="background:linear-gradient(135deg,rgba(0,240,255,0.06),transparent 70%)">
+          <h3 style="display:flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent2)" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Entities</h3>
+          <div class="big-num" id="stat-entities" style="color:var(--accent2);font-size:52px">--</div>
         </div>
-        <div class="card">
-          <h3>Sources</h3>
-          <div class="big-num" id="stat-sources" style="color:var(--purple)">--</div>
+        <div class="card" style="background:linear-gradient(135deg,rgba(124,58,237,0.06),transparent 70%)">
+          <h3 style="display:flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>Sources</h3>
+          <div class="big-num" id="stat-sources" style="color:var(--purple);font-size:52px">--</div>
         </div>
       </div>
 
-      <!-- Timeline -->
-      <div class="card" style="margin-bottom:16px">
-        <h3>Activity (30 days)</h3>
-        <div class="timeline-chart" id="timeline-chart" style="height:140px"></div>
+      <!-- Timeline (SVG area chart) -->
+      <div class="card" style="margin-bottom:16px;padding-bottom:12px">
+        <h3 style="display:flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Activity (30 days)</h3>
+        <div id="timeline-chart" style="height:140px;position:relative">
+          <canvas id="timeline-canvas" style="width:100%;height:100%"></canvas>
+        </div>
       </div>
 
-      <!-- Sources + Salience side by side -->
+      <!-- Sources + Salience -->
       <div class="row">
-        <div class="card"><h3>By Source</h3><div id="source-bars"></div></div>
-        <div class="card"><h3>Salience Distribution</h3><div id="salience-bars"></div></div>
+        <div class="card">
+          <h3 style="display:flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>By Source</h3>
+          <div id="source-bars"></div>
+        </div>
+        <div class="card">
+          <h3 style="display:flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Salience</h3>
+          <div id="salience-bars"></div>
+        </div>
       </div>
 
-      <!-- Entities + Health -->
+      <!-- Top Entities + Health -->
       <div class="row">
         <div class="card">
-          <h3>Top Entities</h3>
+          <h3 style="display:flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent2)" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>Top Entities</h3>
           <div id="top-entities"></div>
         </div>
         <div class="card">
-          <h3>Health Checks</h3>
+          <h3 style="display:flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Health Checks</h3>
           <div id="overview-health-checks"></div>
         </div>
       </div>
@@ -298,7 +314,14 @@ tr.clickable{cursor:pointer}
           <span style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--mute)"><span style="width:10px;height:10px;border-radius:50%;background:#7c3aed"></span>Tool</span>
         </div>
       </div>
-      <canvas id="graph-canvas" style="height:600px"></canvas>
+      <div style="position:relative">
+        <canvas id="graph-canvas" style="height:600px"></canvas>
+        <div style="position:absolute;bottom:12px;left:12px;display:flex;gap:4px">
+          <button class="btn btn-sm btn-ghost" onclick="graphZoom=Math.min(5,graphZoom*1.3);graphPanX=graphPanX;graphPanY=graphPanY" style="width:32px;padding:4px">+</button>
+          <button class="btn btn-sm btn-ghost" onclick="graphZoom=Math.max(0.2,graphZoom*0.7)" style="width:32px;padding:4px">-</button>
+          <button class="btn btn-sm btn-ghost" onclick="graphZoom=1;graphPanX=0;graphPanY=0" style="padding:4px 8px;font-size:10px">Reset</button>
+        </div>
+      </div>
       <div id="graph-tooltip" style="display:none;position:fixed;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:12px;pointer-events:none;z-index:100;box-shadow:0 8px 24px rgba(0,0,0,0.4)">
         <div id="tooltip-name" style="font-weight:600;margin-bottom:4px"></div>
         <div id="tooltip-type" style="color:var(--mute);font-family:'JetBrains Mono',monospace;font-size:11px"></div>
@@ -523,7 +546,7 @@ async function loadOverview() {
       renderBars('source-bars', Object.entries(src).map(([k,v]) => ({label:k,count:v})), 'var(--accent)');
     }
     if (entities && entities.entities) {
-      document.getElementById('stat-entities').innerHTML = entities.entities.length + ' <small>tracked</small>';
+      animateNumber('stat-entities', entities.entities.length, ' <small>tracked</small>');
     }
     if (health) {
       const dot = document.getElementById('overview-health-dot');
@@ -545,21 +568,89 @@ async function loadOverview() {
         label: b.label || b.bucket || b.range || ('Bucket '+(i+1)), count: b.n || b.count || 0, color: colors[i % 5]
       })));
     }
-    if (timeline && timeline.timeline) {
-      const el = document.getElementById('timeline-chart');
-      const max = Math.max(...timeline.timeline.map(d => d.count), 1);
-      el.innerHTML = timeline.timeline.map(d =>
-        `<div class="timeline-bar" style="height:${Math.max((d.count/max)*100, 2)}%" data-tip="${d.day}: ${d.count}"></div>`
+    if (timeline && timeline.timeline && timeline.timeline.length > 0) {
+      // Render SVG area chart
+      const tl = timeline.timeline;
+      const canvas = document.getElementById('timeline-canvas');
+      const tctx = canvas.getContext('2d');
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = canvas.clientWidth * dpr;
+      canvas.height = canvas.clientHeight * dpr;
+      tctx.scale(dpr, dpr);
+      const tw = canvas.clientWidth, th = canvas.clientHeight;
+      const max = Math.max(...tl.map(d => d.count), 1);
+      const padding = 4;
+
+      // Gradient fill
+      const grad = tctx.createLinearGradient(0, 0, 0, th);
+      grad.addColorStop(0, 'rgba(197,255,61,0.3)');
+      grad.addColorStop(1, 'rgba(197,255,61,0.02)');
+
+      // Build points
+      const pts = tl.map((d, i) => ({
+        x: padding + (i / (tl.length - 1)) * (tw - padding * 2),
+        y: th - padding - ((d.count / max) * (th - padding * 2))
+      }));
+
+      // Area fill
+      tctx.beginPath();
+      tctx.moveTo(pts[0].x, th);
+      for (const p of pts) tctx.lineTo(p.x, p.y);
+      tctx.lineTo(pts[pts.length-1].x, th);
+      tctx.closePath();
+      tctx.fillStyle = grad;
+      tctx.fill();
+
+      // Line
+      tctx.beginPath();
+      tctx.moveTo(pts[0].x, pts[0].y);
+      for (let i = 1; i < pts.length; i++) {
+        const cx = (pts[i-1].x + pts[i].x) / 2;
+        tctx.bezierCurveTo(cx, pts[i-1].y, cx, pts[i].y, pts[i].x, pts[i].y);
+      }
+      tctx.strokeStyle = '#c5ff3d';
+      tctx.lineWidth = 2;
+      tctx.stroke();
+
+      // Dots on peaks
+      for (const p of pts) {
+        const d = tl[pts.indexOf(p)];
+        if (d.count > max * 0.5) {
+          tctx.beginPath();
+          tctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+          tctx.fillStyle = '#c5ff3d';
+          tctx.fill();
+        }
+      }
+
+      // Sparkline in the memory KPI card
+      const spark = document.getElementById('stat-total-sparkline');
+      spark.innerHTML = tl.slice(-14).map(d =>
+        `<div style="flex:1;background:var(--accent);opacity:0.5;border-radius:1px;height:${Math.max((d.count/max)*100,4)}%;min-height:2px"></div>`
       ).join('');
     }
+    // Health sub-text
+    if (health && health.checks) {
+      const greenCount = health.checks.filter(c => statusColor(c.status) === 'green').length;
+      document.getElementById('overview-health-sub').textContent = greenCount + '/' + health.checks.length + ' checks passing';
+    }
     if (entities && entities.entities) {
-      const top = entities.entities.sort((a,b) => (b.mentionCount||0) - (a.mentionCount||0)).slice(0, 5);
+      const top = entities.entities.sort((a,b) => (b.mentionCount||0) - (a.mentionCount||0)).slice(0, 8);
       const el = document.getElementById('top-entities');
       if (top.length === 0) { el.innerHTML = '<div class="empty">No entities found</div>'; }
       else {
-        el.innerHTML = top.map(e =>
-          `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)"><span>${esc(e.canonicalName||e.name||'')}</span><span class="mono" style="color:var(--mute)">${e.mentionCount||0} mentions</span></div>`
-        ).join('');
+        const topMax = Math.max(...top.map(e => e.mentionCount || 0), 1);
+        const tc = {person:'var(--green)',project:'var(--orange)',company:'var(--blue)',tool:'var(--purple)'};
+        el.innerHTML = top.map(e => {
+          const color = tc[e.type] || 'var(--mute)';
+          const pct = ((e.mentionCount||0) / topMax * 100);
+          return `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border)">
+            <div style="width:8px;height:8px;border-radius:50%;background:${color};flex-shrink:0;box-shadow:0 0 6px ${color}"></div>
+            <span style="flex:1;font-size:13px;font-weight:500">${esc(e.canonicalName||e.name||'')}</span>
+            <div style="width:80px;height:6px;background:var(--bg);border-radius:3px;overflow:hidden;flex-shrink:0"><div style="width:${pct}%;height:100%;background:${color};border-radius:3px;opacity:0.7"></div></div>
+            <span class="mono" style="color:var(--mute);font-size:11px;width:24px;text-align:right">${e.mentionCount||0}</span>
+          </div>`;
+        }).join('');
       }
     }
   } catch (e) {
@@ -650,10 +741,12 @@ document.getElementById('search-q').addEventListener('keydown', e => { if (e.key
 
 // ---- GRAPH (force-directed, animated, interactive) ----
 let graphNodes = [], graphEdges = [], graphAnim = null, graphDrag = null, graphHover = null;
+let graphZoom = 1, graphPanX = 0, graphPanY = 0, graphPanning = false, graphPanStart = {x:0,y:0};
 const typeColors = {person:'#22c55e',project:'#f97316',company:'#3b82f6',tool:'#7c3aed',default:'#4a4a55'};
 
 function loadGraph() {
   if (graphAnim) cancelAnimationFrame(graphAnim);
+  graphZoom = 1; graphPanX = 0; graphPanY = 0;
   const canvas = document.getElementById('graph-canvas');
   const ctx = canvas.getContext('2d');
   const dpr = window.devicePixelRatio || 1;
@@ -700,10 +793,23 @@ function loadGraph() {
       }
     }
 
-    // Mouse interaction
+    // Screen coords -> world coords (accounting for zoom + pan)
+    function screenToWorld(sx, sy) {
+      return { x: (sx - graphPanX) / graphZoom, y: (sy - graphPanY) / graphZoom };
+    }
+
+    // Mouse interaction with zoom/pan
     canvas.onmousemove = (e) => {
       const rect = canvas.getBoundingClientRect();
-      const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+      const sx = e.clientX - rect.left, sy = e.clientY - rect.top;
+      const { x: mx, y: my } = screenToWorld(sx, sy);
+
+      if (graphPanning) {
+        graphPanX += sx - graphPanStart.x;
+        graphPanY += sy - graphPanStart.y;
+        graphPanStart = { x: sx, y: sy };
+        return;
+      }
       if (graphDrag) {
         graphDrag.x = mx; graphDrag.y = my;
         graphDrag.vx = 0; graphDrag.vy = 0;
@@ -711,7 +817,7 @@ function loadGraph() {
       }
       graphHover = null;
       for (const n of graphNodes) {
-        if (Math.hypot(mx - n.x, my - n.y) < n.size/2 + 4) {
+        if (Math.hypot(mx - n.x, my - n.y) < (n.size/2 + 4) / Math.min(graphZoom, 1)) {
           graphHover = n; break;
         }
       }
@@ -724,22 +830,48 @@ function loadGraph() {
         document.getElementById('tooltip-type').textContent = graphHover.type;
         document.getElementById('tooltip-mentions').textContent = graphHover.mentions + ' mentions';
       } else {
-        canvas.style.cursor = 'default';
+        canvas.style.cursor = graphPanning ? 'grabbing' : 'default';
         tooltip.style.display = 'none';
       }
     };
     canvas.onmousedown = (e) => {
-      if (graphHover) { graphDrag = graphHover; graphDrag.pinned = true; canvas.style.cursor = 'grabbing'; }
+      const rect = canvas.getBoundingClientRect();
+      const sx = e.clientX - rect.left, sy = e.clientY - rect.top;
+      if (graphHover) {
+        graphDrag = graphHover; graphDrag.pinned = true; canvas.style.cursor = 'grabbing';
+      } else {
+        graphPanning = true; graphPanStart = { x: sx, y: sy }; canvas.style.cursor = 'grabbing';
+      }
     };
     canvas.onmouseup = () => {
-      if (graphDrag) { graphDrag.pinned = false; graphDrag = null; canvas.style.cursor = 'default'; }
+      if (graphDrag) { graphDrag.pinned = false; graphDrag = null; }
+      graphPanning = false; canvas.style.cursor = 'default';
     };
-    canvas.onmouseleave = () => { tooltip.style.display = 'none'; if (graphDrag) { graphDrag.pinned = false; graphDrag = null; } };
+    canvas.onmouseleave = () => {
+      tooltip.style.display = 'none';
+      if (graphDrag) { graphDrag.pinned = false; graphDrag = null; }
+      graphPanning = false;
+    };
+    // Zoom with scroll wheel
+    canvas.onwheel = (e) => {
+      e.preventDefault();
+      const rect = canvas.getBoundingClientRect();
+      const sx = e.clientX - rect.left, sy = e.clientY - rect.top;
+      const oldZoom = graphZoom;
+      const delta = e.deltaY > 0 ? 0.9 : 1.1;
+      graphZoom = Math.max(0.2, Math.min(5, graphZoom * delta));
+      // Zoom toward mouse position
+      graphPanX = sx - (sx - graphPanX) * (graphZoom / oldZoom);
+      graphPanY = sy - (sy - graphPanY) * (graphZoom / oldZoom);
+    };
 
     // Animation loop
     let cooling = 1.0;
     function tick() {
       ctx.clearRect(0, 0, W, H);
+      ctx.save();
+      ctx.translate(graphPanX, graphPanY);
+      ctx.scale(graphZoom, graphZoom);
 
       // Force simulation
       const N = graphNodes.length;
@@ -813,6 +945,16 @@ function loadGraph() {
           ctx.textAlign = 'center';
           ctx.fillText(n.name, n.x, n.y + n.size/2 + (isHover ? 16 : 13));
         }
+      }
+
+      ctx.restore();
+
+      // Zoom indicator
+      if (graphZoom !== 1) {
+        ctx.fillStyle = 'rgba(122,122,136,0.5)';
+        ctx.font = '11px JetBrains Mono, monospace';
+        ctx.textAlign = 'right';
+        ctx.fillText(Math.round(graphZoom * 100) + '%', W - 12, H - 10);
       }
 
       graphAnim = requestAnimationFrame(tick);
