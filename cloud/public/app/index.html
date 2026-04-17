@@ -727,7 +727,7 @@ async function loadOverview() {
       api('/api/brain/salience').catch(() => null),
       api('/api/brain/timeline').catch(() => null),
       api('/api/brain/entities').catch(() => null),
-      api('/api/brain/weekly-digest').catch(() => null),
+      api('/api/brain/weekly-digest?lang=' + currentLang).catch(() => null),
     ]);
 
     if (stats) {

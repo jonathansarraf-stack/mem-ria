@@ -169,11 +169,14 @@ export function createBrainApiRoutes(): Hono {
     }
   })
 
-  // GET /weekly-digest — content analysis of last 7 days memories
-  api.get('/weekly-digest', (c) => {
+  // GET /weekly-digest — content analysis of last 7 days memories (async for LLM call)
+  api.get('/weekly-digest', async (c) => {
     const { id } = c.get('user') as { id: string }
+    const path = userBrainPath(id)
+    if (!existsSync(path)) return noBrainError(c)
+    const mem = createMemory({ storage: 'sqlite', path })
     try {
-      return c.json(withBrain(id, (mem) => {
+      return c.json(await (async (mem: any) => {
         const db = (mem as any).store?.raw?.()
         if (!db) return { digest: '' }
 
@@ -230,23 +233,48 @@ export function createBrainApiRoutes(): Hono {
           kindDist[m.kind] = (kindDist[m.kind] || 0) + 1
         }
 
-        // Build natural language digest
-        let digest = ''
-        if (topics.length >= 3) {
-          digest += `Main themes: ${topics.slice(0, 5).map(t => t.word).join(', ')}. `
+        // Build context for LLM narrative
+        const memoryContext = recent.slice(0, 30).map(m =>
+          `[${m.kind}] ${m.title}${m.body ? ': ' + m.body.substring(0, 150) : ''}`
+        ).join('\n')
+
+        // Generate narrative via Gemini
+        let narrative = ''
+        const geminiKey = process.env.GEMINI_API_KEY || process.env.PLATFORM_GEMINI_KEY || ''
+        if (geminiKey && memoryContext) {
+          try {
+            const lang = (c.req.query('lang') || 'en') === 'pt' ? 'Portuguese (Brazil)' : 'English'
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                contents: [{ parts: [{ text:
+                  `You are a personal memory analyst. Below are someone's memories from the last 7 days. Write a SHORT natural-language summary (3-5 sentences max) in ${lang} describing what this person focused on, key events, important people mentioned, and any notable decisions or changes. Be warm and personal, use "you" (or "voce" in PT). Do NOT list items — write flowing prose. Do NOT mention technical details like "salience" or "memory types".\n\nMemories:\n${memoryContext}`
+                }] }],
+                generationConfig: { maxOutputTokens: 500, temperature: 0.7, thinkingConfig: { thinkingBudget: 0 } }
+              })
+            })
+            const body = await res.text()
+            if (res.ok) {
+              const data = JSON.parse(body)
+              narrative = data?.candidates?.[0]?.content?.parts?.[0]?.text || ''
+            } else {
+              console.error(`[cortex-cloud] Gemini API error ${res.status}: ${body.substring(0, 200)}`)
+            }
+          } catch (err) {
+            console.error('[cortex-cloud] Gemini digest error:', err)
+          }
         }
-        if (projects.length) {
-          digest += `Active projects: ${projects.join(', ')}. `
-        }
-        if (decisions.length) {
-          digest += `Key decisions: ${decisions.join('; ')}. `
-        }
-        if (highlights.length) {
-          digest += `Top highlights: ${highlights.map(h => h.title).join(', ')}.`
+
+        // Fallback if no LLM
+        if (!narrative) {
+          if (projects.length) narrative += `Active projects: ${projects.join(', ')}. `
+          if (decisions.length) narrative += `Key decisions: ${decisions.join('; ')}. `
+          if (highlights.length) narrative += `Highlights: ${highlights.map(h => h.title).join(', ')}.`
         }
 
         return {
-          digest,
+          digest: narrative,
           topics,
           decisions,
           projects,
@@ -254,10 +282,9 @@ export function createBrainApiRoutes(): Hono {
           kindDistribution: kindDist,
           memoriesAnalyzed: recent.length,
         }
-      }))
-    } catch (e: any) {
-      if (e.message === 'NO_BRAIN') return noBrainError(c)
-      throw e
+      })(mem))
+    } finally {
+      mem.close()
     }
   })
 

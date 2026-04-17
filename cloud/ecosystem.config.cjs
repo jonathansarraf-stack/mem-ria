@@ -8,6 +8,7 @@ module.exports = {
       NODE_ENV: 'production',
       CORTEX_PORT: '3335',
       CORTEX_DB: '/data/cortex/cortex.db',
+      GEMINI_API_KEY: 'AIzaSyCAuwwbV2E4Bwd8AJttrKtaj-UXZ77xJt4',
     },
     max_memory_restart: '256M',
     error_file: '/var/log/cortex-cloud-error.log',

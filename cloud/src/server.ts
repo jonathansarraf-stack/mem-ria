@@ -20,8 +20,9 @@ function loadEnvFile(path: string): void {
       if (!trimmed || trimmed.startsWith('#')) continue
       const eq = trimmed.indexOf('=')
       if (eq === -1) continue
-      const key = trimmed.slice(0, eq)
+      let key = trimmed.slice(0, eq)
       const val = trimmed.slice(eq + 1)
+      if (key.startsWith('export ')) key = key.slice(7)
       if (!process.env[key]) process.env[key] = val
     }
   } catch {
@@ -33,6 +34,7 @@ function loadEnvFile(path: string): void {
 loadEnvFile('/root/.secrets/cortex-jwt.env')
 loadEnvFile('/root/.secrets/resend.env')
 loadEnvFile('/root/.secrets/cortex-stripe.env')
+loadEnvFile('/root/.config/gemini/env.sh')
 
 // Init database
 const DB_PATH = process.env.CORTEX_DB || '/data/cortex/cortex.db'
