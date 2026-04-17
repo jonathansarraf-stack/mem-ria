@@ -81,15 +81,27 @@ app.route('/api/brain', brainRoutes)
 const brainApiRoutes = createBrainApiRoutes()
 app.route('/api/brain', brainApiRoutes)
 
-// Serve brain logo
+// Serve static assets (logo, favicons)
 app.get('/brain-logo.png', async (c) => {
   try {
     const { readFileSync } = await import('node:fs')
     const png = readFileSync('/root/mem-ria/assets/logo-cortex-brain.png')
     return new Response(png, { headers: { 'Content-Type': 'image/png', 'Cache-Control': 'public, max-age=604800' } })
-  } catch {
-    return c.text('Not found', 404)
-  }
+  } catch { return c.text('Not found', 404) }
+})
+app.get('/favicon.png', async (c) => {
+  try {
+    const { readFileSync } = await import('node:fs')
+    const png = readFileSync('/root/mem-ria/assets/favicon.png')
+    return new Response(png, { headers: { 'Content-Type': 'image/png', 'Cache-Control': 'public, max-age=604800' } })
+  } catch { return c.text('Not found', 404) }
+})
+app.get('/apple-touch-icon.png', async (c) => {
+  try {
+    const { readFileSync } = await import('node:fs')
+    const png = readFileSync('/root/mem-ria/assets/apple-touch-icon.png')
+    return new Response(png, { headers: { 'Content-Type': 'image/png', 'Cache-Control': 'public, max-age=604800' } })
+  } catch { return c.text('Not found', 404) }
 })
 
 // Admin API
