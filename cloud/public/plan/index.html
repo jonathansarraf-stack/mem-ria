@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Cortex — Business Plan (Confidential)</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0a0f;--bg2:#0f0f18;--fg:#f5f5f7;--mute:#7a7a88;--accent:#c5ff3d;--accent2:#00f0ff;--border:rgba(255,255,255,0.08);--red:#ef4444;--orange:#f97316;--yellow:#eab308;--blue:#3b82f6;--green:#22c55e;--purple:#7c3aed}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:'Space Grotesk',sans-serif;font-size:15px;line-height:1.7;-webkit-font-smoothing:antialiased}
+::selection{background:var(--accent);color:var(--bg)}
+code,.mono{font-family:'JetBrains Mono',monospace;font-size:13px}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(circle at 18% 12%,rgba(197,255,61,0.05),transparent 42%),radial-gradient(circle at 82% 28%,rgba(0,240,255,0.03),transparent 44%);pointer-events:none;z-index:0}
+.wrap{max-width:900px;margin:0 auto;padding:40px 24px 80px;position:relative;z-index:1}
+h1{font-size:32px;font-weight:700;margin-bottom:8px;color:var(--accent)}
+h2{font-size:20px;font-weight:600;margin:48px 0 16px;padding-bottom:8px;border-bottom:1px solid var(--border);color:var(--fg)}
+h3{font-size:16px;font-weight:500;margin:24px 0 12px;color:var(--accent2)}
+p{margin-bottom:16px;color:#ccc}
+.subtitle{font-size:14px;color:var(--mute);margin-bottom:32px}
+.confidential{display:inline-block;padding:4px 12px;background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);border-radius:6px;font-size:11px;color:var(--red);letter-spacing:1px;text-transform:uppercase;font-family:'JetBrains Mono',monospace;margin-bottom:24px}
+.card{background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:16px}
+.card h3{margin-top:0}
+.row{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px}
+.row>.card{flex:1;min-width:260px}
+.big{font-size:36px;font-weight:700;color:var(--accent);line-height:1}
+.big small{font-size:14px;color:var(--mute);font-weight:400}
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:14px}
+th{text-align:left;padding:10px 12px;border-bottom:1px solid var(--border);color:var(--mute);font-weight:400;font-size:12px;text-transform:uppercase;letter-spacing:0.5px}
+td{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,0.04)}
+tr:hover td{background:rgba(255,255,255,0.02)}
+td.num{text-align:right;font-family:'JetBrains Mono',monospace;font-size:13px}
+td.green{color:var(--green)}
+td.yellow{color:var(--yellow)}
+td.red{color:var(--red)}
+.tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-family:'JetBrains Mono',monospace}
+.tag-ok{background:rgba(34,197,94,0.15);color:var(--green)}
+.tag-warn{background:rgba(234,179,8,0.15);color:var(--yellow)}
+.tag-danger{background:rgba(239,68,68,0.15);color:var(--red)}
+.bar{height:24px;border-radius:4px;display:flex;overflow:hidden;margin:8px 0}
+.bar>div{height:100%;transition:width .3s}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--mute);margin-top:8px}
+.legend span{display:flex;align-items:center;gap:6px}
+.legend .dot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+ul{margin:8px 0 16px 20px;color:#ccc}
+li{margin-bottom:6px}
+.highlight{background:rgba(197,255,61,0.1);border:1px solid rgba(197,255,61,0.2);border-radius:8px;padding:16px 20px;margin:16px 0}
+.highlight strong{color:var(--accent)}
+.footer{text-align:center;margin-top:64px;padding-top:24px;border-top:1px solid var(--border);font-size:12px;color:var(--mute)}
+@media(max-width:768px){.wrap{padding:24px 16px 60px}.row{flex-direction:column}.row>.card{min-width:auto}h1{font-size:24px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="confidential">Confidencial &mdash; Uso interno</div>
+<h1>Cortex Business Plan</h1>
+<p class="subtitle">Persistent memory for AI agents &mdash; Analise de viabilidade, precificação e go-to-market<br>
+<span class="mono">Gerado: 17 abril 2026 &middot; v1.0</span></p>
+
+<!-- ============================================ -->
+<h2>1. O Produto</h2>
+
+<p>Cortex (mem-ria) dá memória persistente pra AI agents. O dev instala via <code>npm i mem-ria</code>, configura como MCP server no Claude Code, e o AI começa a lembrar entre conversas. Brain cycle noturno computa salience, poda ruído, consolida conhecimento.</p>
+
+<div class="row">
+  <div class="card">
+    <h3>CLI + MCP Server</h3>
+    <p style="color:var(--mute);font-size:13px">Roda local na máquina do dev. brain.db em SQLite. Zero dependência cloud.</p>
+  </div>
+  <div class="card">
+    <h3>Cloud Dashboard</h3>
+    <p style="color:var(--mute);font-size:13px">Assinante faz login, vê brain visualmente: memórias, entidades, saúde, grafo.</p>
+  </div>
+  <div class="card">
+    <h3>Brain Sync</h3>
+    <p style="color:var(--mute);font-size:13px"><code>mem-ria sync</code> comprime e sobe brain.db pro cloud. Dashboard atualiza.</p>
+  </div>
+</div>
+
+<p><strong>Stack:</strong> TypeScript, Hono, SQLite (better-sqlite3), JWT + OTP 2FA, Stripe billing, PM2, Nginx.</p>
+
+<!-- ============================================ -->
+<h2>2. Análise de Mercado</h2>
+
+<h3>TAM — Total Addressable Market</h3>
+<div class="row">
+  <div class="card"><div class="big">30M</div><p style="color:var(--mute);margin:8px 0 0;font-size:13px">Desenvolvedores no mundo (Statista 2026)</p></div>
+  <div class="card"><div class="big">84%</div><p style="color:var(--mute);margin:8px 0 0;font-size:13px">Usam ou planejam usar AI tools (Stack Overflow 2025)</p></div>
+  <div class="card"><div class="big">25M</div><p style="color:var(--mute);margin:8px 0 0;font-size:13px">Devs usando AI tools = mercado endereçável</p></div>
+</div>
+
+<h3>SAM — Segmento endereçável</h3>
+<p>Se 10-20% dos devs com AI tools precisam de memória persistente:</p>
+<div class="highlight"><strong>SAM = 2.5M — 5M devs = $270M — $1.7B/ano</strong> (a $9-29/mês)</div>
+
+<h3>Público-alvo primário</h3>
+<table>
+  <tr><th>Segmento</th><th>Estimativa</th><th>Perfil</th></tr>
+  <tr><td>Claude Code power users</td><td class="num">~500K-1M</td><td>Devs que usam Claude Code diário, pagam Pro/Max</td></tr>
+  <tr><td>Cursor users</td><td class="num">~8M pagantes</td><td>$2B ARR (Bloomberg 2026), ~$20/mês médio</td></tr>
+  <tr><td>GitHub Copilot users</td><td class="num">~3-4M pagantes</td><td>Microsoft earnings + free tier expansion</td></tr>
+</table>
+
+<h3>Competidores diretos</h3>
+<table>
+  <tr><th>Produto</th><th>Modelo</th><th>Preço entrada</th><th>Foco</th></tr>
+  <tr><td>Mem0</td><td>Per-API-request</td><td class="num">$19/mês</td><td>API builders (backend)</td></tr>
+  <tr><td>Zep</td><td>Credits (episodes)</td><td class="num">$25/mês</td><td>Chatbot memory</td></tr>
+  <tr><td>Letta/MemGPT</td><td>Subscription + usage</td><td class="num">$20/mês</td><td>Agent memory framework</td></tr>
+  <tr><td>Pinecone Assistant</td><td>Storage + tokens</td><td class="num">$50/mês</td><td>Vector DB + RAG</td></tr>
+  <tr><td><strong>Cortex (nós)</strong></td><td><strong>Subscription fixa</strong></td><td class="num"><strong>$9/mês</strong></td><td><strong>End-user dev (CLI + dashboard)</strong></td></tr>
+</table>
+
+<div class="highlight">
+  <strong>Diferencial:</strong> Cortex é o único que foca no dev end-user (não no API builder). Roda local com <code>npm install</code>, não precisa de API key de terceiro. Preço de entrada 50-60% abaixo dos competidores.
+</div>
+
+<!-- ============================================ -->
+<h2>3. Precificação</h2>
+
+<table>
+  <tr><th>Plano</th><th>Preço</th><th>Memórias</th><th>Features</th><th>Target</th></tr>
+  <tr>
+    <td><strong>Free</strong></td><td class="num">$0</td><td class="num">100</td>
+    <td>CLI + MCP, brain cycle, search</td>
+    <td>Trial / hobby</td>
+  </tr>
+  <tr>
+    <td><strong>Starter</strong></td><td class="num">$9/mês</td><td class="num">10K</td>
+    <td>+ scheduler, embeddings, replay, HTTP API, cloud dashboard</td>
+    <td>Dev individual</td>
+  </tr>
+  <tr>
+    <td><strong>Pro</strong></td><td class="num">$29/mês</td><td class="num">100K</td>
+    <td>+ proactive, extractor, priority support</td>
+    <td>Power user / consultant</td>
+  </tr>
+  <tr>
+    <td><strong>Team</strong></td><td class="num">$79/mês</td><td class="num">500K</td>
+    <td>+ multi-agent, shared brain, org management</td>
+    <td>Equipes</td>
+  </tr>
+</table>
+
+<h3>Receita por assinante (após Stripe)</h3>
+<table>
+  <tr><th>Plano</th><th>Bruto</th><th>Fee Stripe</th><th>Net</th><th>Margem</th></tr>
+  <tr><td>Starter</td><td class="num">$9.00</td><td class="num">$0.56</td><td class="num green">$8.44</td><td class="num">94%</td></tr>
+  <tr><td>Pro</td><td class="num">$29.00</td><td class="num">$1.14</td><td class="num green">$27.86</td><td class="num">96%</td></tr>
+  <tr><td>Team</td><td class="num">$79.00</td><td class="num">$2.59</td><td class="num green">$76.41</td><td class="num">97%</td></tr>
+</table>
+
+<!-- ============================================ -->
+<h2>4. Custos de Infraestrutura</h2>
+
+<h3>Custo atual (0 assinantes)</h3>
+<table>
+  <tr><th>Item</th><th>Custo/mês</th><th>Nota</th></tr>
+  <tr><td>DigitalOcean Droplet (4vCPU, 8GB, 160GB)</td><td class="num">$48</td><td>Compartilhado com outros projetos</td></tr>
+  <tr><td>Domínio (eontech.pro)</td><td class="num">~$1</td><td>$10/ano Cloudflare Registrar</td></tr>
+  <tr><td>SSL</td><td class="num">$0</td><td>Let's Encrypt</td></tr>
+  <tr><td>Resend (email OTP)</td><td class="num">$0</td><td>Free tier: 100 emails/dia</td></tr>
+  <tr><td>Stripe</td><td class="num">$0</td><td>Sem taxa fixa, só % por transação</td></tr>
+  <tr><td><strong>Total</strong></td><td class="num"><strong>~$49/mês</strong></td><td>Marginal &mdash; infra já existe</td></tr>
+</table>
+
+<h3>Custo por faixa de assinantes</h3>
+<table>
+  <tr><th>Assinantes</th><th>Infra</th><th>Emails</th><th>Suporte</th><th>Total custo</th><th>MRR bruto</th><th>Margem</th></tr>
+  <tr><td>0-100</td><td class="num">$0*</td><td class="num">$0</td><td class="num">$0</td><td class="num">$0</td><td class="num">$1,750</td><td class="num green">~100%</td></tr>
+  <tr><td>100-500</td><td class="num">$48</td><td class="num">$20</td><td class="num">$0</td><td class="num">$68</td><td class="num">$8,750</td><td class="num green">99%</td></tr>
+  <tr><td>500-1K</td><td class="num">$96</td><td class="num">$20</td><td class="num">$0</td><td class="num">$116</td><td class="num">$17,500</td><td class="num green">99%</td></tr>
+  <tr><td>1K-2K</td><td class="num">$192</td><td class="num">$40</td><td class="num">$200</td><td class="num">$432</td><td class="num">$35,000</td><td class="num green">99%</td></tr>
+  <tr><td>2K-5K</td><td class="num">$384</td><td class="num">$80</td><td class="num">$500</td><td class="num">$964</td><td class="num">$87,500</td><td class="num green">99%</td></tr>
+</table>
+<p style="font-size:12px;color:var(--mute)">* Custo $0 porque a infra já roda para outros projetos. O custo incremental do Cortex é ~zero até 100 users.</p>
+
+<div class="highlight">
+  <strong>Margem operacional: ~99%.</strong> É puro SaaS de software — sem custo de LLM no backend (brain roda local), sem GPUs, sem RAG pipeline. O custo é hosting de SQLite files. Isso é raro no espaço de AI tools onde a maioria paga por token.
+</div>
+
+<!-- ============================================ -->
+<h2>5. Capacidade Técnica Atual</h2>
+
+<h3>Benchmark real (medido em produção)</h3>
+<table>
+  <tr><th>Endpoint</th><th>req/s</th><th>Latência</th><th>Nota</th></tr>
+  <tr><td><code>/healthz</code></td><td class="num">1,639</td><td class="num">0.6ms</td><td>Sem DB</td></tr>
+  <tr><td><code>/api/auth/me</code></td><td class="num">1,153</td><td class="num">0.9ms</td><td>JWT + SQLite lookup</td></tr>
+  <tr><td><code>/api/brain/stats</code></td><td class="num">255</td><td class="num">3.9ms</td><td>Abre brain.db do user</td></tr>
+  <tr><td><code>/api/brain/memories</code></td><td class="num">144</td><td class="num">7.0ms</td><td>Paginação + filtros</td></tr>
+  <tr><td><code>/api/brain/search</code></td><td class="num">113</td><td class="num">8.8ms</td><td>Full-text search</td></tr>
+</table>
+
+<h3>Limites por faixa</h3>
+<table>
+  <tr><th>Assinantes</th><th>Dashboards simultâneos</th><th>Infra necessária</th><th>Status</th></tr>
+  <tr><td>0 — 100</td><td class="num">~10</td><td>Atual (4vCPU 8GB)</td><td><span class="tag tag-ok">Pronto</span></td></tr>
+  <tr><td>100 — 500</td><td class="num">~50</td><td>+ PM2 cluster mode (4 instâncias)</td><td><span class="tag tag-ok">Config only</span></td></tr>
+  <tr><td>500 — 2K</td><td class="num">~100</td><td>Upgrade droplet (8vCPU 16GB) + Postgres pro auth</td><td><span class="tag tag-warn">1 dia de trabalho</span></td></tr>
+  <tr><td>2K — 5K</td><td class="num">~200</td><td>Droplet 8vCPU 32GB + brain.db em object storage</td><td><span class="tag tag-warn">1 semana</span></td></tr>
+  <tr><td>5K+</td><td class="num">~500+</td><td>Multi-server + CDN + queue</td><td><span class="tag tag-danger">Redesign</span></td></tr>
+</table>
+
+<h3>Storage</h3>
+<p>Cada brain.db ≈ 6MB (500 entries). Comprimido pra upload: ~3MB.</p>
+<table>
+  <tr><th>Users</th><th>Disco</th><th>Do disponível (44GB)</th></tr>
+  <tr><td class="num">100</td><td class="num">600 MB</td><td class="num green">1.4%</td></tr>
+  <tr><td class="num">500</td><td class="num">3 GB</td><td class="num green">7%</td></tr>
+  <tr><td class="num">1,000</td><td class="num">6 GB</td><td class="num green">14%</td></tr>
+  <tr><td class="num">5,000</td><td class="num">30 GB</td><td class="num yellow">68%</td></tr>
+  <tr><td class="num">7,000</td><td class="num">42 GB</td><td class="num red">96%</td></tr>
+</table>
+
+<!-- ============================================ -->
+<h2>6. Unit Economics</h2>
+
+<h3>Projeção de receita (mix: 70% starter, 25% pro, 5% team)</h3>
+<table>
+  <tr><th>Assinantes</th><th>MRR bruto</th><th>Stripe fees</th><th>Infra</th><th>Net MRR</th><th>ARR</th></tr>
+  <tr><td class="num">50</td><td class="num">$900</td><td class="num">$41</td><td class="num">$0</td><td class="num green">$859</td><td class="num">$10,307</td></tr>
+  <tr><td class="num">100</td><td class="num">$1,750</td><td class="num">$81</td><td class="num">$0</td><td class="num green">$1,669</td><td class="num">$20,031</td></tr>
+  <tr><td class="num">200</td><td class="num">$3,500</td><td class="num">$161</td><td class="num">$68</td><td class="num green">$3,271</td><td class="num">$39,246</td></tr>
+  <tr><td class="num">500</td><td class="num">$8,750</td><td class="num">$404</td><td class="num">$116</td><td class="num green">$8,230</td><td class="num">$98,759</td></tr>
+  <tr><td class="num">1,000</td><td class="num">$17,500</td><td class="num">$807</td><td class="num">$232</td><td class="num green">$16,461</td><td class="num">$197,527</td></tr>
+  <tr><td class="num">2,000</td><td class="num">$35,000</td><td class="num">$1,615</td><td class="num">$432</td><td class="num green">$32,953</td><td class="num">$395,437</td></tr>
+</table>
+
+<div class="highlight">
+  <strong>Break-even: 4 assinantes Starter.</strong> $36/mês cobre o custo marginal zero. Na prática, o produto já é lucrativo no primeiro cliente pagante.
+</div>
+
+<h3>LTV e Churn</h3>
+<table>
+  <tr><th>Métrica</th><th>Conservador</th><th>Otimista</th><th>Fonte</th></tr>
+  <tr><td>Churn mensal</td><td class="num">5%</td><td class="num">2%</td><td>Benchmarks SaaS dev tools</td></tr>
+  <tr><td>Vida média do cliente</td><td class="num">20 meses</td><td class="num">50 meses</td><td>1/churn</td></tr>
+  <tr><td>LTV Starter ($9)</td><td class="num green">$180</td><td class="num green">$450</td><td></td></tr>
+  <tr><td>LTV Pro ($29)</td><td class="num green">$580</td><td class="num green">$1,450</td><td></td></tr>
+  <tr><td>LTV Team ($79)</td><td class="num green">$1,580</td><td class="num green">$3,950</td><td></td></tr>
+  <tr><td>CAC target</td><td colspan="2" class="num">< $30 (LTV/CAC > 6x)</td><td>Regra 3-5x SaaS</td></tr>
+</table>
+
+<h3>Conversão Free → Paid</h3>
+<table>
+  <tr><th>Benchmark</th><th>Taxa</th><th>Fonte</th></tr>
+  <tr><td>Dev tools freemium (mediana)</td><td class="num">5%</td><td>Lenny's Newsletter (1K+ SaaS survey)</td></tr>
+  <tr><td>Dev tools freemium (bom)</td><td class="num">6-8%</td><td></td></tr>
+  <tr><td>Free trial → paid</td><td class="num">8-25%</td><td></td></tr>
+</table>
+
+<p>Com 5% de conversão sobre o free tier:</p>
+<table>
+  <tr><th>Downloads npm (free)</th><th>Pagantes (5%)</th><th>MRR estimado</th></tr>
+  <tr><td class="num">1,000</td><td class="num">50</td><td class="num">$900</td></tr>
+  <tr><td class="num">5,000</td><td class="num">250</td><td class="num">$4,375</td></tr>
+  <tr><td class="num">10,000</td><td class="num">500</td><td class="num">$8,750</td></tr>
+  <tr><td class="num">50,000</td><td class="num">2,500</td><td class="num green">$43,750</td></tr>
+</table>
+
+<!-- ============================================ -->
+<h2>7. Go-to-Market</h2>
+
+<h3>Fase 1: Validação (mês 1-2) — 0→50 users</h3>
+<ul>
+  <li>Publicar no npm (já feito: <code>mem-ria</code> v0.2.0)</li>
+  <li>Post no r/ClaudeAI, r/ChatGPTCoding, Hacker News (Show HN)</li>
+  <li>Thread no X/Twitter com demo (CLI → dashboard em 2 min)</li>
+  <li>Claude Code community (Discord, GitHub discussions)</li>
+  <li><strong>Meta:</strong> 500 installs npm, 20-30 free users ativos, 5 pagantes</li>
+</ul>
+
+<h3>Fase 2: Traction (mês 3-6) — 50→500 users</h3>
+<ul>
+  <li>Blog posts: "How I gave Claude Code a brain", "Why your AI forgets everything"</li>
+  <li>Integrações: Cursor, Windsurf, Continue.dev (MCP é universal)</li>
+  <li>Product Hunt launch</li>
+  <li>GitHub stars como social proof (README polido, GIFs de demo)</li>
+  <li><strong>Meta:</strong> 5K installs, 200 free users, 50 pagantes ($900 MRR)</li>
+</ul>
+
+<h3>Fase 3: Growth (mês 6-12) — 500→2K users</h3>
+<ul>
+  <li>Content marketing: comparativos (Cortex vs Mem0 vs Zep)</li>
+  <li>Partnerships: AI tools newsletters, dev tool roundups</li>
+  <li>Team plan: vender pra pequenas equipes de desenvolvimento</li>
+  <li><strong>Meta:</strong> 50K installs, 1K free, 200 pagantes ($3.5K MRR)</li>
+</ul>
+
+<!-- ============================================ -->
+<h2>8. Riscos</h2>
+
+<table>
+  <tr><th>Risco</th><th>Impacto</th><th>Probabilidade</th><th>Mitigação</th></tr>
+  <tr>
+    <td>Claude Code / Cursor adicionam memória nativa</td>
+    <td><span class="tag tag-danger">Alto</span></td>
+    <td><span class="tag tag-warn">Média</span></td>
+    <td>Cortex é multi-tool (não lock-in), brain cycle é IP proprietário, dashboard é valor adicional</td>
+  </tr>
+  <tr>
+    <td>Mercado pequeno demais (nicho de nicho)</td>
+    <td><span class="tag tag-warn">Médio</span></td>
+    <td><span class="tag tag-warn">Média</span></td>
+    <td>Expandir pra Cursor/Windsurf/qualquer MCP client, não só Claude Code</td>
+  </tr>
+  <tr>
+    <td>Churn alto (devs experimentam e abandonam)</td>
+    <td><span class="tag tag-warn">Médio</span></td>
+    <td><span class="tag tag-danger">Alta</span></td>
+    <td>Valor precisa ser óbvio em 5 min. Onboarding zero-friction. Free tier generoso pra criar hábito</td>
+  </tr>
+  <tr>
+    <td>Competidor com funding (Mem0 levantou série A)</td>
+    <td><span class="tag tag-warn">Médio</span></td>
+    <td><span class="tag tag-ok">Baixa</span></td>
+    <td>Posicionamento diferente: local-first vs API-first. David vs Goliath funciona em dev tools</td>
+  </tr>
+  <tr>
+    <td>Capacidade do founder (tempo/foco)</td>
+    <td><span class="tag tag-danger">Alto</span></td>
+    <td><span class="tag tag-danger">Alta</span></td>
+    <td>Automatizar tudo: billing, onboarding, support docs. Não escalar suporte manual</td>
+  </tr>
+</table>
+
+<!-- ============================================ -->
+<h2>9. Cenários</h2>
+
+<div class="row">
+  <div class="card" style="border-color:rgba(239,68,68,0.3)">
+    <h3 style="color:var(--red)">Pessimista (12 meses)</h3>
+    <div class="big" style="color:var(--red)">$1.7K <small>MRR</small></div>
+    <p style="font-size:13px;color:var(--mute);margin-top:8px">100 assinantes, 2% conversão, churn 5%/mês. Cobre custos mas não é negócio.</p>
+  </div>
+  <div class="card" style="border-color:rgba(197,255,61,0.3)">
+    <h3 style="color:var(--accent)">Base (12 meses)</h3>
+    <div class="big">$8.7K <small>MRR</small></div>
+    <p style="font-size:13px;color:var(--mute);margin-top:8px">500 assinantes, 5% conversão de 10K downloads. $100K ARR. Lucro quase puro.</p>
+  </div>
+  <div class="card" style="border-color:rgba(0,240,255,0.3)">
+    <h3 style="color:var(--accent2)">Otimista (12 meses)</h3>
+    <div class="big" style="color:var(--accent2)">$35K <small>MRR</small></div>
+    <p style="font-size:13px;color:var(--mute);margin-top:8px">2K assinantes via viral HN/ProductHunt + Cursor integration. $400K ARR. Precisa de infra upgrade ($192/mês).</p>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<h2>10. Decisões Pendentes</h2>
+
+<table>
+  <tr><th>#</th><th>Decisão</th><th>Opções</th><th>Impacto</th></tr>
+  <tr><td class="num">1</td><td>Brain cycle no cloud com LLM?</td><td>Sim (custo $) vs Não (só local)</td><td>Se sim: replay, consolidator, proactive funcionam no cloud. Custo ~$0.01-0.05/cycle/user.</td></tr>
+  <tr><td class="num">2</td><td>Embeddings no cloud?</td><td>OpenAI API ($) vs local-only vs Gemini</td><td>Semantic search no dashboard. Custo ~$0.001/entry. 1K users × 1K entries = $1/dia.</td></tr>
+  <tr><td class="num">3</td><td>Preço do Starter</td><td>$9 vs $12 vs $15</td><td>$9 é abaixo de todos competidores. $15 ainda é. LTV muda 67%.</td></tr>
+  <tr><td class="num">4</td><td>Free tier com dashboard?</td><td>Sim (aquisição) vs Não (paywall)</td><td>Dashboard no free tier aumenta conversão mas aumenta infra.</td></tr>
+  <tr><td class="num">5</td><td>Marca: "Cortex" ou "mem-ria"?</td><td>Cortex (global) vs mem-ria (técnico)</td><td>npm é mem-ria, domínio é cortex. Precisa unificar.</td></tr>
+</table>
+
+<!-- ============================================ -->
+
+<div class="footer">
+  Cortex by Eontech &middot; Documento interno &middot; Abril 2026<br>
+  <span class="mono">cortex.eontech.pro/plan/</span>
+</div>
+
+</div>
+</body>
+</html>

@@ -26,6 +26,18 @@
     "@mem-ria/server": "workspace:*",
     "commander": "^12.0.0"
   },
+  "description": "A brain for your AI. Persistent memory with importance scoring, auto-pruning, entity linking, and self-diagnosis.",
+  "keywords": [
+    "ai", "memory", "brain", "claude-code", "mcp", "llm", "sqlite",
+    "ai-agents", "persistent-memory", "knowledge-graph", "developer-tools",
+    "cursor", "windsurf", "anthropic", "salience", "embeddings"
+  ],
+  "homepage": "https://cortex.eontech.pro",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jonathansarraf-stack/mem-ria.git"
+  },
+  "author": "Jonathan Sarraf <jonathansouzasarraf@gmail.com>",
   "license": "MIT",
   "files": [
     "dist",

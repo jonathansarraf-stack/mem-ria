@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Cortex — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0a0f;--bg2:#0f0f18;--fg:#f5f5f7;--mute:#7a7a88;--mute2:#4a4a55;--accent:#c5ff3d;--accent2:#00f0ff;--border:rgba(255,255,255,0.08);--card:rgba(255,255,255,0.03);--red:#ef4444;--orange:#f97316;--yellow:#eab308;--blue:#3b82f6;--green:#22c55e;--purple:#7c3aed}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:'Space Grotesk',sans-serif;font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased}
+::selection{background:var(--accent);color:var(--bg)}
+code,.mono{font-family:'JetBrains Mono',monospace;font-size:13px}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(circle at 18% 12%,rgba(197,255,61,0.04),transparent 42%);pointer-events:none;z-index:0}
+.wrap{max-width:1100px;margin:0 auto;padding:24px;position:relative;z-index:1}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+.topbar h1{font-size:16px;font-weight:500;color:var(--mute)}
+.topbar h1 span{color:var(--accent)}
+.topbar .meta{font-size:12px;color:var(--mute2);font-family:'JetBrains Mono',monospace}
+.refresh-btn{background:var(--card);border:1px solid var(--border);color:var(--mute);padding:6px 14px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:12px}
+.refresh-btn:hover{color:var(--fg);border-color:var(--mute)}
+
+/* Cards */
+.row{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px}
+.card.sm{min-width:180px;flex:1}
+.card h3{font-size:11px;color:var(--mute);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px;font-weight:500}
+.metric{font-size:36px;font-weight:700;color:var(--accent);line-height:1}
+.metric small{font-size:13px;color:var(--mute);font-weight:400;margin-left:4px}
+.metric.blue{color:var(--accent2)}
+.metric.green{color:var(--green)}
+.metric.red{color:var(--red)}
+.metric.yellow{color:var(--yellow)}
+
+/* Funnel */
+.funnel{margin:16px 0}
+.funnel-step{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.funnel-bar{height:32px;border-radius:4px;display:flex;align-items:center;padding:0 12px;font-size:13px;font-weight:500;color:var(--bg);min-width:40px;transition:width .5s ease}
+.funnel-label{font-size:13px;color:var(--mute);width:120px;text-align:right;flex-shrink:0}
+.funnel-count{font-size:13px;color:var(--fg);font-family:'JetBrains Mono',monospace;width:60px}
+
+/* Table */
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:10px 12px;border-bottom:1px solid var(--border);color:var(--mute);font-weight:400;font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+td{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,0.04)}
+tr:hover td{background:rgba(255,255,255,0.02)}
+td.num{text-align:right;font-family:'JetBrains Mono',monospace}
+
+/* Tags */
+.tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-family:'JetBrains Mono',monospace}
+.tag-active{background:rgba(34,197,94,0.15);color:var(--green)}
+.tag-free{background:rgba(122,122,136,0.15);color:var(--mute)}
+.tag-starter{background:rgba(59,130,246,0.15);color:var(--blue)}
+.tag-pro{background:rgba(197,255,61,0.15);color:var(--accent)}
+.tag-team{background:rgba(124,58,237,0.15);color:var(--purple)}
+.tag-synced{background:rgba(34,197,94,0.15);color:var(--green)}
+.tag-no{background:rgba(239,68,68,0.1);color:var(--mute2)}
+.tag-green{background:rgba(34,197,94,0.15);color:var(--green)}
+.tag-yellow{background:rgba(234,179,8,0.15);color:var(--yellow)}
+.tag-red{background:rgba(239,68,68,0.15);color:var(--red)}
+
+/* Bars */
+.bar-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.bar-label{width:120px;text-align:right;font-size:12px;color:var(--mute);flex-shrink:0;font-family:'JetBrains Mono',monospace}
+.bar-track{flex:1;height:20px;background:var(--bg);border-radius:4px;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px;transition:width .4s ease}
+.bar-val{width:50px;font-size:12px;color:var(--mute);font-family:'JetBrains Mono',monospace}
+
+/* Timeline */
+.chart-row{display:flex;align-items:flex-end;gap:3px;height:100px;padding:8px 0}
+.chart-bar{flex:1;border-radius:2px 2px 0 0;min-width:6px;transition:height .3s;position:relative;cursor:default}
+.chart-bar:hover{opacity:.8}
+.chart-bar:hover::after{content:attr(data-tip);position:absolute;bottom:100%;left:50%;transform:translateX(-50%);background:var(--bg2);border:1px solid var(--border);border-radius:4px;padding:4px 8px;font-size:11px;white-space:nowrap;color:var(--fg);z-index:10}
+.chart-labels{display:flex;gap:3px;font-size:10px;color:var(--mute2)}
+.chart-labels>span{flex:1;text-align:center;min-width:6px;overflow:hidden}
+
+.empty{color:var(--mute2);font-style:italic;padding:16px 0;text-align:center}
+.section-title{font-size:18px;font-weight:600;margin:32px 0 16px;padding-top:16px;border-top:1px solid var(--border)}
+
+@media(max-width:768px){.wrap{padding:16px}.row{flex-direction:column}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="topbar">
+  <h1><span>Cortex</span> Admin</h1>
+  <div style="display:flex;align-items:center;gap:12px">
+    <span class="meta" id="last-refresh">--</span>
+    <button class="refresh-btn" onclick="loadAll()">Refresh</button>
+  </div>
+</div>
+
+<!-- KPI row -->
+<div class="row" id="kpi-row">
+  <div class="card sm"><h3>Total Users</h3><div class="metric" id="kpi-users">--</div></div>
+  <div class="card sm"><h3>Active Sessions</h3><div class="metric blue" id="kpi-sessions">--</div></div>
+  <div class="card sm"><h3>Brains Synced</h3><div class="metric green" id="kpi-brains">--</div></div>
+  <div class="card sm"><h3>Paying</h3><div class="metric" id="kpi-paying">--</div></div>
+  <div class="card sm"><h3>Total Memories</h3><div class="metric blue" id="kpi-memories">--</div></div>
+</div>
+
+<!-- Funnel -->
+<div class="card">
+  <h3>Conversion Funnel</h3>
+  <div class="funnel" id="funnel"></div>
+</div>
+
+<!-- Signups + Logins timeline -->
+<div class="row">
+  <div class="card" style="flex:1;min-width:300px">
+    <h3>Signups (30 days)</h3>
+    <div class="chart-row" id="chart-signups"></div>
+    <div class="chart-labels" id="chart-signups-labels"></div>
+  </div>
+  <div class="card" style="flex:1;min-width:300px">
+    <h3>Logins (30 days)</h3>
+    <div class="chart-row" id="chart-logins"></div>
+    <div class="chart-labels" id="chart-logins-labels"></div>
+  </div>
+</div>
+
+<!-- Aggregate brain stats -->
+<div class="section-title">Brain Analytics (aggregated)</div>
+<div class="row">
+  <div class="card sm"><h3>Avg Entries/User</h3><div class="metric blue" id="agg-avg-entries">--</div></div>
+  <div class="card sm"><h3>Avg Entities/User</h3><div class="metric green" id="agg-avg-entities">--</div></div>
+  <div class="card sm"><h3>Total Storage</h3><div class="metric" id="agg-storage">--</div></div>
+</div>
+
+<div class="row">
+  <div class="card" style="flex:1;min-width:260px">
+    <h3>Sources (all users)</h3>
+    <div id="agg-sources"></div>
+  </div>
+  <div class="card" style="flex:1;min-width:260px">
+    <h3>Kinds (all users)</h3>
+    <div id="agg-kinds"></div>
+  </div>
+  <div class="card" style="flex:1;min-width:200px">
+    <h3>Brain Health</h3>
+    <div id="agg-health"></div>
+  </div>
+</div>
+
+<!-- User table -->
+<div class="section-title">Users</div>
+<div class="card" style="overflow-x:auto">
+  <table>
+    <thead>
+      <tr>
+        <th>User</th>
+        <th>Plan</th>
+        <th>Brain</th>
+        <th>Entries</th>
+        <th>Entities</th>
+        <th>Health</th>
+        <th>Sources</th>
+        <th>Size</th>
+        <th>Last Sync</th>
+        <th>Joined</th>
+      </tr>
+    </thead>
+    <tbody id="user-table"></tbody>
+  </table>
+</div>
+
+</div>
+
+<script>
+const API = window.location.origin;
+const KEY = new URLSearchParams(window.location.search).get('key') || '';
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+
+async function api(path) {
+  const sep = path.includes('?') ? '&' : '?';
+  const res = await fetch(API + path + sep + 'key=' + KEY);
+  if (!res.ok) return null;
+  return res.json();
+}
+
+function renderBars(id, items, color) {
+  const el = document.getElementById(id);
+  if (!items || !items.length) { el.innerHTML = '<div class="empty">No data</div>'; return; }
+  const max = Math.max(...items.map(i => i.count), 1);
+  el.innerHTML = items.sort((a,b) => b.count - a.count).map(i =>
+    `<div class="bar-row"><div class="bar-label">${esc(i.label)}</div><div class="bar-track"><div class="bar-fill" style="width:${(i.count/max)*100}%;background:${color}"></div></div><div class="bar-val">${i.count.toLocaleString()}</div></div>`
+  ).join('');
+}
+
+function renderTimeline(chartId, labelsId, data, color) {
+  const el = document.getElementById(chartId);
+  const lbl = document.getElementById(labelsId);
+  if (!data || !data.length) { el.innerHTML = '<div class="empty">No data</div>'; return; }
+  const max = Math.max(...data.map(d => d.c), 1);
+  el.innerHTML = data.map(d =>
+    `<div class="chart-bar" style="height:${Math.max((d.c/max)*100, 3)}%;background:${color}" data-tip="${d.day}: ${d.c}"></div>`
+  ).join('');
+  lbl.innerHTML = data.map((d, i) =>
+    i % Math.ceil(data.length / 8) === 0 ? `<span>${d.day.slice(5)}</span>` : '<span></span>'
+  ).join('');
+}
+
+function planTag(plan) {
+  const cls = {free:'tag-free',starter:'tag-starter',pro:'tag-pro',team:'tag-team'}[plan] || 'tag-free';
+  return `<span class="tag ${cls}">${plan || 'free'}</span>`;
+}
+
+function healthTag(h) {
+  if (!h) return '<span class="tag tag-no">--</span>';
+  const cls = {green:'tag-green',yellow:'tag-yellow',red:'tag-red'}[h] || 'tag-no';
+  return `<span class="tag ${cls}">${h}</span>`;
+}
+
+function relTime(ts) {
+  if (!ts) return '--';
+  const d = Date.now() - ts;
+  if (d < 60000) return 'just now';
+  if (d < 3600000) return Math.floor(d/60000) + 'm ago';
+  if (d < 86400000) return Math.floor(d/3600000) + 'h ago';
+  return Math.floor(d/86400000) + 'd ago';
+}
+
+async function loadAll() {
+  document.getElementById('last-refresh').textContent = new Date().toLocaleTimeString();
+
+  const [overview, users, aggregate, funnel] = await Promise.all([
+    api('/api/admin/overview'),
+    api('/api/admin/users'),
+    api('/api/admin/aggregate'),
+    api('/api/admin/funnel'),
+  ]);
+
+  // KPIs
+  if (overview) {
+    document.getElementById('kpi-users').innerHTML = overview.users.total + '<small>users</small>';
+    document.getElementById('kpi-sessions').innerHTML = overview.users.active_sessions + '<small>active</small>';
+    document.getElementById('kpi-brains').innerHTML = overview.brains.synced + '<small>synced</small>';
+
+    const paying = overview.subscriptions.filter(s => s.status === 'active').reduce((a, s) => a + s.c, 0);
+    document.getElementById('kpi-paying').innerHTML = paying + '<small>paying</small>';
+
+    // Signups timeline
+    renderTimeline('chart-signups', 'chart-signups-labels', overview.signups_30d, 'var(--accent)');
+    renderTimeline('chart-logins', 'chart-logins-labels', overview.logins_30d, 'var(--accent2)');
+  }
+
+  // Aggregate
+  if (aggregate) {
+    document.getElementById('kpi-memories').innerHTML = aggregate.total_entries_all_users.toLocaleString() + '<small>total</small>';
+    document.getElementById('agg-avg-entries').innerHTML = aggregate.avg_entries_per_user + '<small>/user</small>';
+    document.getElementById('agg-avg-entities').innerHTML = aggregate.avg_entities_per_user + '<small>/user</small>';
+    document.getElementById('agg-storage').innerHTML = aggregate.brain_sizes.total_mb + '<small>MB</small>';
+
+    renderBars('agg-sources',
+      Object.entries(aggregate.sources_global).map(([k, v]) => ({ label: k, count: v })),
+      'var(--accent)');
+    renderBars('agg-kinds',
+      Object.entries(aggregate.kinds_global).map(([k, v]) => ({ label: k, count: v })),
+      'var(--accent2)');
+
+    // Health distribution
+    const hEl = document.getElementById('agg-health');
+    const hd = aggregate.health_distribution;
+    const hTotal = Object.values(hd).reduce((a, b) => a + b, 0);
+    hEl.innerHTML = ['green', 'yellow', 'red', 'none'].map(h => {
+      const c = hd[h] || 0;
+      const pct = hTotal ? Math.round(c / hTotal * 100) : 0;
+      const color = { green: 'var(--green)', yellow: 'var(--yellow)', red: 'var(--red)', none: 'var(--mute2)' }[h];
+      return `<div class="bar-row"><div class="bar-label">${h}</div><div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${color}"></div></div><div class="bar-val">${c}</div></div>`;
+    }).join('');
+  }
+
+  // Funnel
+  if (funnel && funnel.funnel) {
+    const el = document.getElementById('funnel');
+    const maxCount = Math.max(...funnel.funnel.map(f => f.count), 1);
+    const colors = ['var(--accent)', 'var(--accent2)', 'var(--blue)', 'var(--green)', 'var(--purple)'];
+    el.innerHTML = funnel.funnel.map((f, i) =>
+      `<div class="funnel-step">
+        <div class="funnel-label">${f.step}</div>
+        <div class="funnel-bar" style="width:${Math.max((f.count/maxCount)*100, 5)}%;background:${colors[i]}">${f.count}</div>
+        <div class="funnel-count">${f.pct}%</div>
+      </div>`
+    ).join('');
+  }
+
+  // Users table
+  if (users && users.users) {
+    const tbody = document.getElementById('user-table');
+    tbody.innerHTML = users.users.map(u => {
+      const sources = Object.entries(u.brain.sources || {}).map(([k, v]) => `${k}(${v})`).join(', ') || '--';
+      return `<tr>
+        <td><div style="font-weight:500">${esc(u.name)}</div><div class="mono" style="font-size:11px;color:var(--mute)">${esc(u.email_masked)}</div></td>
+        <td>${planTag(u.plan)}</td>
+        <td>${u.brain.synced ? '<span class="tag tag-synced">synced</span>' : '<span class="tag tag-no">no</span>'}</td>
+        <td class="num">${u.brain.entries.toLocaleString() || '--'}</td>
+        <td class="num">${u.brain.entities || '--'}</td>
+        <td>${healthTag(u.brain.health)}</td>
+        <td style="font-size:12px;color:var(--mute);max-width:200px;overflow:hidden;text-overflow:ellipsis">${esc(sources)}</td>
+        <td class="num">${u.brain.synced ? Math.round(u.brain.size_kb / 1024 * 10) / 10 + ' MB' : '--'}</td>
+        <td style="font-size:12px;color:var(--mute)">${u.brain.last_sync ? relTime(u.brain.last_sync) : '--'}</td>
+        <td style="font-size:12px;color:var(--mute)">${new Date(u.created).toLocaleDateString()}</td>
+      </tr>`;
+    }).join('');
+  }
+}
+
+loadAll();
+// Auto-refresh every 30s
+setInterval(loadAll, 30000);
+</script>
+</body>
+</html>

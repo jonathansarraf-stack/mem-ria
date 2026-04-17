@@ -1,0 +1,29 @@
+{
+  "name": "@mem-ria/cloud",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx src/server.ts",
+    "build": "tsup src/server.ts --format esm --target node20",
+    "start": "node dist/server.js",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.19.14",
+    "@mem-ria/brain": "workspace:*",
+    "@mem-ria/core": "workspace:*",
+    "bcryptjs": "^2.4.3",
+    "better-sqlite3": "^11.8.1",
+    "hono": "^4.12.14",
+    "jsonwebtoken": "^9.0.2"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/jsonwebtoken": "^9.0.7",
+    "tsup": "^8.4.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.8.0"
+  }
+}

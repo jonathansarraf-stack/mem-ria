@@ -1,0 +1,107 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 520" font-family="'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace" font-size="13">
+  <style>
+    .bg { fill: #0a0a0f; }
+    .titlebar { fill: #1a1a24; }
+    .btn { rx: 6; ry: 6; }
+    .btn-r { fill: #ff5f57; }
+    .btn-y { fill: #febc2e; }
+    .btn-g { fill: #28c840; }
+    .prompt { fill: #c5ff3d; }
+    .cmd { fill: #f5f5f7; }
+    .dim { fill: #7a7a88; }
+    .accent { fill: #c5ff3d; }
+    .cyan { fill: #00f0ff; }
+    .blue { fill: #3b82f6; }
+    .green { fill: #22c55e; }
+    .yellow { fill: #eab308; }
+    .orange { fill: #f97316; }
+    .red { fill: #ef4444; }
+    .purple { fill: #7c3aed; }
+    .white { fill: #f5f5f7; }
+
+    @keyframes type1 { from { opacity: 0; } 0% { opacity: 0; } 8% { opacity: 1; } to { opacity: 1; } }
+    @keyframes type2 { from { opacity: 0; } 0% { opacity: 0; } 20% { opacity: 0; } 28% { opacity: 1; } to { opacity: 1; } }
+    @keyframes type3 { from { opacity: 0; } 0% { opacity: 0; } 45% { opacity: 0; } 53% { opacity: 1; } to { opacity: 1; } }
+    @keyframes type4 { from { opacity: 0; } 0% { opacity: 0; } 70% { opacity: 0; } 78% { opacity: 1; } to { opacity: 1; } }
+
+    .step1 { animation: type1 12s infinite; }
+    .step2 { animation: type2 12s infinite; }
+    .step3 { animation: type3 12s infinite; }
+    .step4 { animation: type4 12s infinite; }
+
+    @keyframes blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+    .cursor { animation: blink 1s infinite; fill: #c5ff3d; }
+  </style>
+
+  <!-- Window frame -->
+  <rect class="bg" width="800" height="520" rx="10"/>
+  <rect class="titlebar" width="800" height="36" rx="10"/>
+  <rect class="bg" y="26" width="800" height="10"/>
+  <circle class="btn-r" cx="20" cy="18" r="6"/>
+  <circle class="btn-y" cx="40" cy="18" r="6"/>
+  <circle class="btn-g" cx="60" cy="18" r="6"/>
+  <text x="400" y="22" text-anchor="middle" class="dim" font-size="12">Terminal — mem-ria</text>
+
+  <!-- Step 1: Install + Init -->
+  <g class="step1">
+    <text x="20" y="65" class="prompt">❯</text>
+    <text x="36" y="65" class="cmd">npm install -g mem-ria</text>
+    <text x="20" y="88" class="dim">added 6 packages in 3s</text>
+
+    <text x="20" y="118" class="prompt">❯</text>
+    <text x="36" y="118" class="cmd">mem-ria init</text>
+    <text x="20" y="141" class="dim">  MCP server configured in ~/.claude/settings.json</text>
+    <text x="20" y="161" class="white">mem-ria initialized.</text>
+    <text x="20" y="181" class="dim">  Mode: personal</text>
+    <text x="20" y="201" class="dim">  Database: ~/.mem-ria/brain.db</text>
+    <text x="20" y="221" class="accent">  Memories ingested: 508</text>
+  </g>
+
+  <!-- Step 2: Status -->
+  <g class="step2">
+    <text x="20" y="258" class="prompt">❯</text>
+    <text x="36" y="258" class="cmd">mem-ria status</text>
+    <text x="20" y="286" class="white">mem-ria status</text>
+    <text x="20" y="310" class="cyan">Total memories: 508</text>
+    <text x="20" y="333" class="dim">By source: vault(391), claude_memory(48), git(14), claude_md(7)</text>
+    <text x="20" y="356" class="dim">By kind: doc(269), project(123), person(71), note(23), journal(11)</text>
+    <text x="20" y="383" class="yellow">Brain Health: YELLOW</text>
+    <text x="20" y="406" class="green">  [OK] ingestion: 52 entries in 24h</text>
+    <text x="20" y="426" class="green">  [OK] database: 508 entries</text>
+    <text x="20" y="446" class="green">  [OK] salience: 100 computed, 3 high</text>
+    <text x="20" y="466" class="yellow">  [WARN] embeddings: 0% coverage</text>
+  </g>
+
+  <!-- Step 3: Search -->
+  <g class="step3">
+    <text x="430" y="65" class="prompt">❯</text>
+    <text x="446" y="65" class="cmd">mem-ria search "Clawdio"</text>
+
+    <text x="430" y="95" class="purple">[project/claude_memory]</text>
+    <text x="430" y="115" class="white">Projeto Clawdio - OpenClaw</text>
+    <text x="430" y="135" class="dim">  Score: 4.82 | Salience: 1.8</text>
+
+    <text x="430" y="162" class="purple">[project/vault]</text>
+    <text x="430" y="182" class="white">Clawdio Code Mode</text>
+    <text x="430" y="202" class="dim">  Score: 3.41 | Salience: 1.5</text>
+
+    <text x="430" y="229" class="blue">[doc/vault]</text>
+    <text x="430" y="249" class="white">Agentes Clawdio</text>
+    <text x="430" y="269" class="dim">  Score: 2.97 | Salience: 1.2</text>
+  </g>
+
+  <!-- Step 4: Sync -->
+  <g class="step4">
+    <text x="430" y="310" class="prompt">❯</text>
+    <text x="446" y="310" class="cmd">mem-ria sync</text>
+    <text x="430" y="336" class="dim">Syncing brain.db to cortex.eontech.pro</text>
+    <text x="430" y="356" class="dim">  Size: 6056 KB → 2969 KB (51% compression)</text>
+    <text x="430" y="383" class="green">Sync complete.</text>
+    <text x="430" y="406" class="dim">  Uploaded: 5904 KB</text>
+    <text x="430" y="426" class="dim">  Time: 2026-04-17T00:19:40Z</text>
+    <text x="430" y="456" class="accent">→ View dashboard: cortex.eontech.pro/app/</text>
+  </g>
+
+  <!-- Blinking cursor at bottom -->
+  <rect class="cursor" x="20" y="488" width="8" height="16" rx="1"/>
+</svg>

@@ -4,6 +4,10 @@
 
 mem-ria gives your AI persistent memory that actively manages itself: scores importance, prunes noise, consolidates knowledge overnight, and diagnoses its own health.
 
+![Cortex Dashboard](assets/dashboard-preview.png)
+
+![CLI Demo](assets/demo-cli.svg)
+
 ## Quick start (Claude Code)
 
 ```bash

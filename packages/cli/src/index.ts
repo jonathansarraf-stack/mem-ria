@@ -28,6 +28,8 @@ interface Config {
   scope?: string
   agents?: Array<{ id: string; scopes: string[] }>
   licenseKey?: string
+  cloudUrl?: string
+  cloudRefreshToken?: string
 }
 
 function loadConfig(): Config {
@@ -261,7 +263,7 @@ program
   .command('config [key] [value]')
   .description('Show or set configuration')
   .action((key, value) => {
-    const ALLOWED_CONFIG_KEYS = ['mode', 'dbPath', 'scope']
+    const ALLOWED_CONFIG_KEYS = ['mode', 'dbPath', 'scope', 'cloudUrl']
     const config = loadConfig()
     if (!key) {
       console.log(JSON.stringify(config, null, 2))
@@ -325,6 +327,158 @@ program
     console.log(`    HTTP API: ${limits.httpApi ? 'yes' : 'no'}`)
     console.log(`    Multi-agent: ${limits.multiAgent ? 'yes' : 'no'}`)
     console.log(`    Extractor: ${limits.extractor ? 'yes' : 'no'}`)
+  })
+
+// --- cloud-login ---
+program
+  .command('cloud-login')
+  .description('Login to Cortex Cloud and store credentials')
+  .option('--url <url>', 'Cloud API URL', 'https://cortex.eontech.pro')
+  .option('--email <email>', 'Account email')
+  .option('--password <password>', 'Account password')
+  .option('--code <code>', 'OTP code (step 2)')
+  .option('--login-token <token>', 'Login token from step 1')
+  .action(async (opts) => {
+    const cloudUrl = opts.url.replace(/\/$/, '')
+    const config = loadConfig()
+    config.cloudUrl = cloudUrl
+
+    // Step 2: verify OTP
+    if (opts.loginToken && opts.code) {
+      try {
+        const res = await fetch(`${cloudUrl}/api/auth/verify`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ login_token: opts.loginToken, code: opts.code }),
+        })
+        const data = await res.json() as any
+        if (!data.ok) {
+          console.error(`Login failed: ${data.error}`)
+          process.exitCode = 1
+          return
+        }
+        config.cloudRefreshToken = data.refresh_token
+        saveConfig(config)
+        console.log(`\nLogged in as ${data.user.email}`)
+        console.log(`  Plan: ${data.user.plan}`)
+        console.log(`  Cloud URL: ${cloudUrl}`)
+        console.log(`\n  Run 'mem-ria sync' to upload your brain.`)
+      } catch (err) {
+        console.error(`Connection failed: ${err}`)
+        process.exitCode = 1
+      }
+      return
+    }
+
+    // Step 1: email + password → get OTP
+    if (!opts.email || !opts.password) {
+      console.error('Usage:\n  Step 1: mem-ria cloud-login --email you@example.com --password yourpass')
+      console.error('  Step 2: mem-ria cloud-login --login-token <token> --code <otp>')
+      process.exitCode = 1
+      return
+    }
+
+    try {
+      const res = await fetch(`${cloudUrl}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: opts.email, password: opts.password }),
+      })
+      const data = await res.json() as any
+      if (!data.ok) {
+        console.error(`Login failed: ${data.error}`)
+        process.exitCode = 1
+        return
+      }
+      saveConfig(config)
+      console.log(`\nOTP sent to ${opts.email}. Check your email.`)
+      console.log(`\nStep 2: mem-ria cloud-login --login-token ${data.login_token} --code <OTP>`)
+    } catch (err) {
+      console.error(`Connection failed: ${err}`)
+      process.exitCode = 1
+    }
+  })
+
+// --- sync ---
+program
+  .command('sync')
+  .description('Sync local brain.db to Cortex Cloud')
+  .option('--url <url>', 'Cloud API URL (overrides config)')
+  .option('--token <token>', 'Access token (overrides stored credentials)')
+  .action(async (opts) => {
+    const config = loadConfig()
+    const cloudUrl = (opts.url || config.cloudUrl || 'https://cortex.eontech.pro').replace(/\/$/, '')
+    const brainDbPath = config.dbPath || BRAIN_DB_PATH
+
+    if (!existsSync(brainDbPath)) {
+      console.error(`brain.db not found at ${brainDbPath}. Run 'mem-ria init' first.`)
+      process.exitCode = 1
+      return
+    }
+
+    // Get access token
+    let accessToken = opts.token
+    if (!accessToken && config.cloudRefreshToken) {
+      // Refresh to get access token
+      try {
+        const res = await fetch(`${cloudUrl}/api/auth/refresh`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refresh_token: config.cloudRefreshToken }),
+        })
+        const data = await res.json() as any
+        if (!data.ok) {
+          console.error(`Token refresh failed: ${data.error}. Run 'mem-ria cloud-login' again.`)
+          process.exitCode = 1
+          return
+        }
+        accessToken = data.access_token
+      } catch (err) {
+        console.error(`Connection failed: ${err}`)
+        process.exitCode = 1
+        return
+      }
+    }
+
+    if (!accessToken) {
+      console.error("No credentials. Run 'mem-ria cloud-login' first or use --token <jwt>.")
+      process.exitCode = 1
+      return
+    }
+
+    // Read and compress brain.db
+    const { gzipSync } = await import('node:zlib')
+    const raw = readFileSync(brainDbPath)
+    const compressed = gzipSync(raw)
+    const ratio = ((1 - compressed.length / raw.length) * 100).toFixed(0)
+
+    console.log(`Syncing brain.db to ${cloudUrl}`)
+    console.log(`  Size: ${(raw.length / 1024).toFixed(0)} KB → ${(compressed.length / 1024).toFixed(0)} KB (${ratio}% compression)`)
+
+    // Upload
+    try {
+      const res = await fetch(`${cloudUrl}/api/brain/upload`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/octet-stream',
+          'Content-Encoding': 'gzip',
+        },
+        body: compressed,
+      })
+      const data = await res.json() as any
+      if (!data.ok) {
+        console.error(`Upload failed: ${data.error}`)
+        process.exitCode = 1
+        return
+      }
+      console.log(`\nSync complete.`)
+      console.log(`  Uploaded: ${(data.size / 1024).toFixed(0)} KB`)
+      console.log(`  Time: ${new Date(data.uploaded_at).toISOString()}`)
+    } catch (err) {
+      console.error(`Upload failed: ${err}`)
+      process.exitCode = 1
+    }
   })
 
 program.parse()
