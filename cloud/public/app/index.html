@@ -222,20 +222,49 @@ tr.clickable{cursor:pointer}
   <div class="content">
     <!-- OVERVIEW -->
     <div class="page active" id="p-overview">
-      <div class="row">
-        <div class="card"><h3>Total Memories</h3><div class="big-num" id="stat-total">--</div></div>
-        <div class="card"><h3>Brain Health</h3><div class="overall-big"><div class="dot gray" id="overview-health-dot"></div><div class="label" id="overview-health-label">--</div></div></div>
+      <!-- Hero KPIs -->
+      <div class="row" style="margin-bottom:24px">
+        <div class="card" style="background:linear-gradient(135deg,rgba(197,255,61,0.08),rgba(0,240,255,0.04));border-color:rgba(197,255,61,0.15)">
+          <h3>Total Memories</h3>
+          <div class="big-num" id="stat-total" style="font-size:56px">--</div>
+        </div>
+        <div class="card" style="position:relative;overflow:hidden">
+          <div style="position:absolute;top:-20px;right:-20px;width:100px;height:100px;border-radius:50%;filter:blur(40px);opacity:0.3" id="health-glow"></div>
+          <h3>Brain Health</h3>
+          <div class="overall-big"><div class="dot gray" id="overview-health-dot" style="width:42px;height:42px"></div><div class="label" id="overview-health-label" style="font-size:32px">--</div></div>
+        </div>
+        <div class="card">
+          <h3>Entities</h3>
+          <div class="big-num" id="stat-entities" style="color:var(--accent2)">--</div>
+        </div>
+        <div class="card">
+          <h3>Sources</h3>
+          <div class="big-num" id="stat-sources" style="color:var(--purple)">--</div>
+        </div>
       </div>
-      <div class="row">
-        <div class="card"><h3>Memories / Day (30d)</h3><div class="timeline-chart" id="timeline-chart"></div></div>
+
+      <!-- Timeline -->
+      <div class="card" style="margin-bottom:16px">
+        <h3>Activity (30 days)</h3>
+        <div class="timeline-chart" id="timeline-chart" style="height:140px"></div>
       </div>
+
+      <!-- Sources + Salience side by side -->
       <div class="row">
         <div class="card"><h3>By Source</h3><div id="source-bars"></div></div>
         <div class="card"><h3>Salience Distribution</h3><div id="salience-bars"></div></div>
       </div>
+
+      <!-- Entities + Health -->
       <div class="row">
-        <div class="card"><h3>Top Entities</h3><div id="top-entities"></div></div>
-        <div class="card"><h3>Health Checks</h3><div id="overview-health-checks"></div></div>
+        <div class="card">
+          <h3>Top Entities</h3>
+          <div id="top-entities"></div>
+        </div>
+        <div class="card">
+          <h3>Health Checks</h3>
+          <div id="overview-health-checks"></div>
+        </div>
       </div>
     </div>
 
@@ -260,7 +289,21 @@ tr.clickable{cursor:pointer}
 
     <!-- GRAPH -->
     <div class="page" id="p-graph">
-      <canvas id="graph-canvas"></canvas>
+      <div class="row" style="margin-bottom:12px">
+        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+          <span style="font-size:12px;color:var(--mute);font-family:'JetBrains Mono',monospace">Legend:</span>
+          <span style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--mute)"><span style="width:10px;height:10px;border-radius:50%;background:#22c55e"></span>Person</span>
+          <span style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--mute)"><span style="width:10px;height:10px;border-radius:50%;background:#f97316"></span>Project</span>
+          <span style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--mute)"><span style="width:10px;height:10px;border-radius:50%;background:#3b82f6"></span>Company</span>
+          <span style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--mute)"><span style="width:10px;height:10px;border-radius:50%;background:#7c3aed"></span>Tool</span>
+        </div>
+      </div>
+      <canvas id="graph-canvas" style="height:600px"></canvas>
+      <div id="graph-tooltip" style="display:none;position:fixed;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:12px;pointer-events:none;z-index:100;box-shadow:0 8px 24px rgba(0,0,0,0.4)">
+        <div id="tooltip-name" style="font-weight:600;margin-bottom:4px"></div>
+        <div id="tooltip-type" style="color:var(--mute);font-family:'JetBrains Mono',monospace;font-size:11px"></div>
+        <div id="tooltip-mentions" style="color:var(--accent);font-family:'JetBrains Mono',monospace;font-size:11px;margin-top:2px"></div>
+      </div>
     </div>
 
     <!-- HEALTH -->
@@ -474,16 +517,23 @@ async function loadOverview() {
     ]);
 
     if (stats) {
-      document.getElementById('stat-total').innerHTML = (stats.total ?? '--') + ' <small>memories</small>';
+      animateNumber('stat-total', stats.total ?? 0, ' <small>memories</small>');
       const src = stats.bySource || {};
+      document.getElementById('stat-sources').innerHTML = Object.keys(src).length + ' <small>sources</small>';
       renderBars('source-bars', Object.entries(src).map(([k,v]) => ({label:k,count:v})), 'var(--accent)');
+    }
+    if (entities && entities.entities) {
+      document.getElementById('stat-entities').innerHTML = entities.entities.length + ' <small>tracked</small>';
     }
     if (health) {
       const dot = document.getElementById('overview-health-dot');
       const label = document.getElementById('overview-health-label');
-      dot.className = 'dot ' + statusColor(health.overall);
+      const hc = statusColor(health.overall);
+      dot.className = 'dot ' + hc;
       label.textContent = health.overall || '--';
-      label.style.color = 'var(--' + statusColor(health.overall) + ')';
+      label.style.color = 'var(--' + hc + ')';
+      const glowColors = {green:'#22c55e',yellow:'#eab308',red:'#ef4444',gray:'#4a4a55'};
+      document.getElementById('health-glow').style.background = glowColors[hc] || glowColors.gray;
       const el = document.getElementById('overview-health-checks');
       el.innerHTML = (health.checks || []).map(c =>
         `<div class="health-card"><div class="dot ${statusColor(c.status)}"></div><div class="info"><div class="dim">${esc(c.dimension||c.name||'')}</div><div class="msg">${esc(c.message||'')}</div></div></div>`
@@ -598,8 +648,12 @@ async function doSearch() {
 }
 document.getElementById('search-q').addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
 
-// ---- GRAPH ----
+// ---- GRAPH (force-directed, animated, interactive) ----
+let graphNodes = [], graphEdges = [], graphAnim = null, graphDrag = null, graphHover = null;
+const typeColors = {person:'#22c55e',project:'#f97316',company:'#3b82f6',tool:'#7c3aed',default:'#4a4a55'};
+
 function loadGraph() {
+  if (graphAnim) cancelAnimationFrame(graphAnim);
   const canvas = document.getElementById('graph-canvas');
   const ctx = canvas.getContext('2d');
   const dpr = window.devicePixelRatio || 1;
@@ -607,6 +661,7 @@ function loadGraph() {
   canvas.height = canvas.clientHeight * dpr;
   ctx.scale(dpr, dpr);
   const W = canvas.clientWidth, H = canvas.clientHeight;
+  const tooltip = document.getElementById('graph-tooltip');
 
   api('/api/brain/entities').then(data => {
     if (!data || !data.entities || data.entities.length === 0) {
@@ -614,81 +669,152 @@ function loadGraph() {
       ctx.textAlign = 'center'; ctx.fillText('No entities to visualize', W/2, H/2);
       return;
     }
-    const entities = data.entities.slice(0, 40); // cap at 40 nodes
-    const typeColors = {person:'#22c55e',project:'#f97316',company:'#3b82f6',tool:'#7c3aed',default:'#4a4a55'};
 
-    // Simple force-directed layout (static positions based on index)
-    const nodes = entities.map((e, i) => {
+    const entities = data.entities.sort((a,b) => (b.mentionCount||0) - (a.mentionCount||0)).slice(0, 60);
+
+    // Create nodes with velocity
+    graphNodes = entities.map((e, i) => {
       const angle = (i / entities.length) * Math.PI * 2;
-      const r = Math.min(W, H) * 0.35;
+      const r = Math.min(W, H) * 0.3;
       const mentions = e.mentionCount || 1;
       return {
-        x: W/2 + Math.cos(angle) * r * (0.5 + Math.random() * 0.5),
-        y: H/2 + Math.sin(angle) * r * (0.5 + Math.random() * 0.5),
+        x: W/2 + Math.cos(angle) * r * (0.3 + Math.random() * 0.7),
+        y: H/2 + Math.sin(angle) * r * (0.3 + Math.random() * 0.7),
+        vx: 0, vy: 0,
         name: e.canonicalName || e.name || '?',
         type: e.type || 'default',
-        size: Math.min(8 + Math.sqrt(mentions) * 4, 30),
-        mentions
+        size: Math.min(6 + Math.sqrt(mentions) * 3, 28),
+        mentions, pinned: false
       };
     });
 
-    // Simple spring simulation (10 iterations)
-    for (let iter = 0; iter < 30; iter++) {
-      for (let i = 0; i < nodes.length; i++) {
-        for (let j = i+1; j < nodes.length; j++) {
-          const dx = nodes[j].x - nodes[i].x;
-          const dy = nodes[j].y - nodes[i].y;
+    // Create edges (same type = connected, weighted by proximity in list)
+    graphEdges = [];
+    for (let i = 0; i < graphNodes.length; i++) {
+      for (let j = i+1; j < graphNodes.length; j++) {
+        if (graphNodes[i].type === graphNodes[j].type && graphNodes[i].type !== 'default') {
+          graphEdges.push({ source: i, target: j, strength: 0.3 });
+        }
+      }
+    }
+
+    // Mouse interaction
+    canvas.onmousemove = (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+      if (graphDrag) {
+        graphDrag.x = mx; graphDrag.y = my;
+        graphDrag.vx = 0; graphDrag.vy = 0;
+        return;
+      }
+      graphHover = null;
+      for (const n of graphNodes) {
+        if (Math.hypot(mx - n.x, my - n.y) < n.size/2 + 4) {
+          graphHover = n; break;
+        }
+      }
+      if (graphHover) {
+        canvas.style.cursor = 'grab';
+        tooltip.style.display = 'block';
+        tooltip.style.left = (e.clientX + 12) + 'px';
+        tooltip.style.top = (e.clientY - 10) + 'px';
+        document.getElementById('tooltip-name').textContent = graphHover.name;
+        document.getElementById('tooltip-type').textContent = graphHover.type;
+        document.getElementById('tooltip-mentions').textContent = graphHover.mentions + ' mentions';
+      } else {
+        canvas.style.cursor = 'default';
+        tooltip.style.display = 'none';
+      }
+    };
+    canvas.onmousedown = (e) => {
+      if (graphHover) { graphDrag = graphHover; graphDrag.pinned = true; canvas.style.cursor = 'grabbing'; }
+    };
+    canvas.onmouseup = () => {
+      if (graphDrag) { graphDrag.pinned = false; graphDrag = null; canvas.style.cursor = 'default'; }
+    };
+    canvas.onmouseleave = () => { tooltip.style.display = 'none'; if (graphDrag) { graphDrag.pinned = false; graphDrag = null; } };
+
+    // Animation loop
+    let cooling = 1.0;
+    function tick() {
+      ctx.clearRect(0, 0, W, H);
+
+      // Force simulation
+      const N = graphNodes.length;
+      // Repulsion (all pairs)
+      for (let i = 0; i < N; i++) {
+        for (let j = i+1; j < N; j++) {
+          const dx = graphNodes[j].x - graphNodes[i].x;
+          const dy = graphNodes[j].y - graphNodes[i].y;
           const dist = Math.sqrt(dx*dx + dy*dy) || 1;
-          const minDist = nodes[i].size + nodes[j].size + 40;
-          if (dist < minDist) {
-            const force = (minDist - dist) * 0.3;
-            const fx = (dx/dist)*force, fy = (dy/dist)*force;
-            nodes[j].x += fx; nodes[j].y += fy;
-            nodes[i].x -= fx; nodes[i].y -= fy;
-          }
+          const repulse = 800 / (dist * dist) * cooling;
+          const fx = (dx/dist) * repulse, fy = (dy/dist) * repulse;
+          if (!graphNodes[i].pinned) { graphNodes[i].vx -= fx; graphNodes[i].vy -= fy; }
+          if (!graphNodes[j].pinned) { graphNodes[j].vx += fx; graphNodes[j].vy += fy; }
         }
-        // Pull toward center
-        nodes[i].x += (W/2 - nodes[i].x) * 0.01;
-        nodes[i].y += (H/2 - nodes[i].y) * 0.01;
+      }
+      // Attraction (edges)
+      for (const e of graphEdges) {
+        const a = graphNodes[e.source], b = graphNodes[e.target];
+        const dx = b.x - a.x, dy = b.y - a.y;
+        const dist = Math.sqrt(dx*dx + dy*dy) || 1;
+        const attract = (dist - 120) * 0.005 * e.strength * cooling;
+        const fx = (dx/dist) * attract, fy = (dy/dist) * attract;
+        if (!a.pinned) { a.vx += fx; a.vy += fy; }
+        if (!b.pinned) { b.vx -= fx; b.vy -= fy; }
+      }
+      // Gravity toward center
+      for (const n of graphNodes) {
+        if (n.pinned) continue;
+        n.vx += (W/2 - n.x) * 0.0008 * cooling;
+        n.vy += (H/2 - n.y) * 0.0008 * cooling;
+        // Apply velocity with damping
+        n.vx *= 0.85; n.vy *= 0.85;
+        n.x += n.vx; n.y += n.vy;
         // Boundary
-        nodes[i].x = Math.max(30, Math.min(W-30, nodes[i].x));
-        nodes[i].y = Math.max(30, Math.min(H-30, nodes[i].y));
+        n.x = Math.max(n.size, Math.min(W - n.size, n.x));
+        n.y = Math.max(n.size, Math.min(H - n.size, n.y));
       }
-    }
+      if (cooling > 0.15) cooling *= 0.998;
 
-    // Draw edges (connect entities that share type)
-    ctx.globalAlpha = 0.1;
-    ctx.strokeStyle = '#c5ff3d';
-    ctx.lineWidth = 1;
-    for (let i = 0; i < nodes.length; i++) {
-      for (let j = i+1; j < nodes.length; j++) {
-        if (nodes[i].type === nodes[j].type && nodes[i].type !== 'default') {
-          ctx.beginPath();
-          ctx.moveTo(nodes[i].x, nodes[i].y);
-          ctx.lineTo(nodes[j].x, nodes[j].y);
-          ctx.stroke();
+      // Draw edges
+      for (const e of graphEdges) {
+        const a = graphNodes[e.source], b = graphNodes[e.target];
+        const dist = Math.hypot(b.x-a.x, b.y-a.y);
+        if (dist > 250) continue; // only draw close edges
+        ctx.globalAlpha = Math.max(0.03, 0.15 - dist/2000);
+        ctx.strokeStyle = typeColors[a.type] || '#4a4a55';
+        ctx.lineWidth = 0.8;
+        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+
+      // Draw nodes
+      for (const n of graphNodes) {
+        const color = typeColors[n.type] || typeColors.default;
+        const isHover = n === graphHover;
+        // Glow
+        ctx.shadowColor = color;
+        ctx.shadowBlur = isHover ? n.size * 2 : n.size * 0.8;
+        ctx.fillStyle = color;
+        ctx.globalAlpha = isHover ? 1 : 0.85;
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, (isHover ? n.size/2 + 3 : n.size/2), 0, Math.PI*2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.globalAlpha = 1;
+        // Label (only for bigger nodes or hovered)
+        if (n.size > 10 || isHover) {
+          ctx.fillStyle = isHover ? '#ffffff' : 'rgba(245,245,247,0.7)';
+          ctx.font = `${isHover ? 13 : 11}px Space Grotesk`;
+          ctx.textAlign = 'center';
+          ctx.fillText(n.name, n.x, n.y + n.size/2 + (isHover ? 16 : 13));
         }
       }
-    }
-    ctx.globalAlpha = 1;
 
-    // Draw nodes
-    for (const n of nodes) {
-      const color = typeColors[n.type] || typeColors.default;
-      // Glow
-      ctx.shadowColor = color;
-      ctx.shadowBlur = n.size;
-      ctx.fillStyle = color;
-      ctx.beginPath();
-      ctx.arc(n.x, n.y, n.size/2, 0, Math.PI*2);
-      ctx.fill();
-      ctx.shadowBlur = 0;
-      // Label
-      ctx.fillStyle = '#f5f5f7';
-      ctx.font = `${Math.max(10, 12)}px Space Grotesk`;
-      ctx.textAlign = 'center';
-      ctx.fillText(n.name, n.x, n.y + n.size/2 + 14);
+      graphAnim = requestAnimationFrame(tick);
     }
+    tick();
   }).catch(() => {
     ctx.fillStyle = '#4a4a55'; ctx.font = '14px Space Grotesk';
     ctx.textAlign = 'center'; ctx.fillText('No brain synced', W/2, H/2);
@@ -778,6 +904,25 @@ function renderBarsColored(containerId, items) {
   el.innerHTML = items.map(i =>
     `<div class="bar-row"><div class="bar-label">${esc(i.label)}</div><div class="bar-track"><div class="bar-fill" style="width:${(i.count/max)*100}%;background:${i.color}"></div></div><div class="bar-val">${i.count}</div></div>`
   ).join('');
+}
+
+// ---- ANIMATE NUMBER ----
+function animateNumber(id, target, suffix = '') {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const start = parseInt(el.textContent) || 0;
+  const diff = target - start;
+  if (diff === 0) { el.innerHTML = target + suffix; return; }
+  const duration = 600;
+  const startTime = performance.now();
+  function step(now) {
+    const progress = Math.min((now - startTime) / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+    const current = Math.round(start + diff * eased);
+    el.innerHTML = current.toLocaleString() + suffix;
+    if (progress < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
 }
 
 // ---- INIT ----
