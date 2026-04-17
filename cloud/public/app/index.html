@@ -208,7 +208,8 @@ tr.clickable{cursor:pointer}
     <div class="user-info">
       <span id="user-email"></span>
       <span class="plan-badge" id="user-plan">free</span>
-      <button class="logout-btn" onclick="doLogout()">Logout</button>
+      <button class="logout-btn" onclick="toggleLang()" id="lang-btn" style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.5px">EN</button>
+      <button class="logout-btn" onclick="doLogout()" data-i18n="logout">Logout</button>
     </div>
   </div>
   <div class="nav-tabs">
@@ -251,11 +252,24 @@ tr.clickable{cursor:pointer}
         </div>
       </div>
 
-      <!-- Timeline (SVG area chart) -->
+      <!-- Weekly summary + Timeline -->
       <div class="card" style="margin-bottom:16px;padding-bottom:12px">
+        <div id="weekly-summary" style="margin-bottom:16px;padding:14px 18px;background:linear-gradient(135deg,rgba(197,255,61,0.05),rgba(0,240,255,0.03));border:1px solid rgba(197,255,61,0.1);border-radius:10px;font-size:13px;color:#ccc;line-height:1.7;display:none">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;font-size:11px;color:var(--mute);font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:1px">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            Weekly Insight
+          </div>
+          <span id="weekly-summary-text"></span>
+        </div>
         <h3 style="display:flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Activity (30 days)</h3>
-        <div id="timeline-chart" style="height:140px;position:relative">
+        <div id="timeline-chart" style="height:140px;position:relative;cursor:crosshair">
           <canvas id="timeline-canvas" style="width:100%;height:100%"></canvas>
+          <div id="tl-tooltip" style="display:none;position:absolute;top:4px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:11px;pointer-events:none;z-index:10;box-shadow:0 4px 16px rgba(0,0,0,0.4)">
+            <div id="tl-tip-date" style="color:var(--fg);font-weight:600;font-family:'JetBrains Mono',monospace"></div>
+            <div id="tl-tip-count" style="color:var(--accent);font-family:'JetBrains Mono',monospace;margin-top:2px"></div>
+          </div>
+          <div id="tl-crosshair" style="display:none;position:absolute;top:0;bottom:0;width:1px;background:var(--accent);opacity:0.5;pointer-events:none"></div>
+          <div id="tl-dot" style="display:none;position:absolute;width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent);pointer-events:none;transform:translate(-4px,-4px)"></div>
         </div>
       </div>
 
@@ -401,6 +415,139 @@ tr.clickable{cursor:pointer}
 </div>
 
 <script>
+// ---- i18n ----
+const i18n = {
+  en: {
+    // Auth
+    signin: 'Sign in', signup: 'Create account', verify: 'Verify',
+    email: 'Email', password: 'Password', name: 'Name',
+    password_hint: 'Password (min 8 chars)', continue: 'Continue',
+    create_account: 'Create account', no_account: "Don't have an account? Sign up",
+    have_account: 'Already have an account? Sign in',
+    otp_subtitle: 'Enter the 6-digit code sent to your email',
+    otp_verify: 'Verify', logout: 'Logout',
+    email_pass_required: 'Email and password required',
+    enter_6digit: 'Enter 6-digit code', connection_error: 'Connection error',
+    // Tabs
+    tab_overview: 'Overview', tab_explorer: 'Explorer', tab_graph: 'Graph',
+    tab_health: 'Health', tab_settings: 'Settings',
+    // Overview
+    memories: 'Memories', health: 'Health', entities: 'Entities', sources: 'Sources',
+    checks_passing: 'checks passing', tracked: 'tracked',
+    weekly_insight: 'Weekly Insight', activity_30d: 'Activity (30 days)',
+    by_source: 'By Source', salience: 'Salience', top_entities: 'Top Entities',
+    health_checks: 'Health Checks', memories_label: 'memories',
+    // Weekly summary
+    ws_captured: 'Your brain captured', ws_last7: 'in the last 7 days',
+    ws_avg: 'avg', ws_day: 'day', ws_peak: 'Peak day was', ws_with: 'with',
+    ws_entries: 'entries', ws_top_sources: 'Top sources', ws_most_mentioned: 'Most mentioned',
+    ws_active_days: 'active days out of', ws_in_last: 'in the last 30 days',
+    ws_total_activity: 'Total activity', ws_vs_prev: 'compared to the previous week',
+    ws_same: 'About the same as last week.',
+    // Explorer
+    search_placeholder: 'Search memories...', search: 'Search',
+    all_kinds: 'All kinds', all_sources: 'All sources',
+    newest: 'Newest first', highest_salience: 'Highest salience',
+    no_memories: 'No memories found. Run `mem-ria sync` to upload your brain.',
+    no_results: 'No results.',
+    // Graph
+    legend: 'Legend', person: 'Person', project: 'Project', company: 'Company', tool: 'Tool',
+    mentions: 'mentions', no_entities: 'No entities to visualize',
+    // Health
+    overall_status: 'Overall Status', dimensions: 'Dimensions',
+    brain_selfdiag: 'brain self-diagnosis', dims_healthy: 'dimensions healthy',
+    no_brain: 'No brain synced',
+    // Settings
+    account: 'Account', plan: 'Plan', license_key: 'License Key',
+    brain_sync: 'Brain Sync', status: 'Status', size: 'Size', last_sync: 'Last Sync',
+    actions: 'Actions', download_brain: 'Download brain.db', run_cycle: 'Run Brain Cycle',
+    manage_billing: 'Manage Billing', synced: 'Synced', not_synced: 'Not synced',
+    copy: 'copy', copied: 'copied!',
+  },
+  pt: {
+    signin: 'Entrar', signup: 'Criar conta', verify: 'Verificar',
+    email: 'Email', password: 'Senha', name: 'Nome',
+    password_hint: 'Senha (min 8 caracteres)', continue: 'Continuar',
+    create_account: 'Criar conta', no_account: 'Nao tem conta? Cadastre-se',
+    have_account: 'Ja tem conta? Entre',
+    otp_subtitle: 'Digite o codigo de 6 digitos enviado pro seu email',
+    otp_verify: 'Verificar', logout: 'Sair',
+    email_pass_required: 'Email e senha obrigatorios',
+    enter_6digit: 'Digite o codigo de 6 digitos', connection_error: 'Erro de conexao',
+    tab_overview: 'Visao Geral', tab_explorer: 'Explorador', tab_graph: 'Grafo',
+    tab_health: 'Saude', tab_settings: 'Configuracoes',
+    memories: 'Memorias', health: 'Saude', entities: 'Entidades', sources: 'Fontes',
+    checks_passing: 'checks OK', tracked: 'rastreadas',
+    weekly_insight: 'Resumo Semanal', activity_30d: 'Atividade (30 dias)',
+    by_source: 'Por Fonte', salience: 'Saliencia', top_entities: 'Top Entidades',
+    health_checks: 'Verificacoes de Saude', memories_label: 'memorias',
+    ws_captured: 'Seu cerebro capturou', ws_last7: 'nos ultimos 7 dias',
+    ws_avg: 'media', ws_day: 'dia', ws_peak: 'Dia de pico foi', ws_with: 'com',
+    ws_entries: 'entradas', ws_top_sources: 'Top fontes', ws_most_mentioned: 'Mais mencionados',
+    ws_active_days: 'dias ativos de', ws_in_last: 'nos ultimos 30 dias',
+    ws_total_activity: 'Atividade total', ws_vs_prev: 'comparado a semana anterior',
+    ws_same: 'Mesmo ritmo da semana passada.',
+    search_placeholder: 'Buscar memorias...', search: 'Buscar',
+    all_kinds: 'Todos os tipos', all_sources: 'Todas as fontes',
+    newest: 'Mais recentes', highest_salience: 'Maior saliencia',
+    no_memories: 'Nenhuma memoria encontrada. Execute `mem-ria sync` para enviar seu brain.',
+    no_results: 'Sem resultados.',
+    legend: 'Legenda', person: 'Pessoa', project: 'Projeto', company: 'Empresa', tool: 'Ferramenta',
+    mentions: 'mencoes', no_entities: 'Nenhuma entidade para visualizar',
+    overall_status: 'Status Geral', dimensions: 'Dimensoes',
+    brain_selfdiag: 'autodiagnostico do brain', dims_healthy: 'dimensoes saudaveis',
+    no_brain: 'Nenhum brain sincronizado',
+    account: 'Conta', plan: 'Plano', license_key: 'Chave de Licenca',
+    brain_sync: 'Sincronizacao', status: 'Status', size: 'Tamanho', last_sync: 'Ultimo Sync',
+    actions: 'Acoes', download_brain: 'Baixar brain.db', run_cycle: 'Rodar Brain Cycle',
+    manage_billing: 'Gerenciar Pagamento', synced: 'Sincronizado', not_synced: 'Nao sincronizado',
+    copy: 'copiar', copied: 'copiado!',
+  }
+};
+let currentLang = localStorage.getItem('cortex_lang') || 'en';
+function t(key) { return (i18n[currentLang] || i18n.en)[key] || (i18n.en)[key] || key; }
+function toggleLang() {
+  currentLang = currentLang === 'en' ? 'pt' : 'en';
+  localStorage.setItem('cortex_lang', currentLang);
+  document.getElementById('lang-btn').textContent = currentLang.toUpperCase();
+  applyLang();
+}
+function applyLang() {
+  // Auth screens
+  document.querySelector('#auth-login h2').textContent = t('signin');
+  document.querySelector('#auth-signup h2').textContent = t('signup');
+  document.querySelector('#auth-otp h2').textContent = t('verify');
+  document.getElementById('login-email').placeholder = t('email');
+  document.getElementById('login-pass').placeholder = t('password');
+  document.getElementById('signup-name').placeholder = t('name');
+  document.getElementById('signup-email').placeholder = t('email');
+  document.getElementById('signup-pass').placeholder = t('password_hint');
+  document.querySelector('#auth-login .auth-btn').textContent = t('continue');
+  document.querySelector('#auth-signup .auth-btn').textContent = t('create_account');
+  document.querySelector('#auth-login .auth-link').textContent = t('no_account');
+  document.querySelector('#auth-signup .auth-link').textContent = t('have_account');
+  document.querySelector('#auth-otp .auth-step').textContent = t('otp_subtitle');
+  document.querySelector('#auth-otp .auth-btn').textContent = t('otp_verify');
+  document.querySelector('[data-i18n="logout"]').textContent = t('logout');
+  // Tabs - update text nodes only (keep SVG icons)
+  const tabs = document.querySelectorAll('.nav-tab');
+  const tabKeys = ['tab_overview','tab_explorer','tab_graph','tab_health','tab_settings'];
+  tabs.forEach((tab, i) => {
+    const svg = tab.querySelector('svg');
+    if (svg) { tab.textContent = ''; tab.prepend(svg); tab.append(' ' + t(tabKeys[i])); }
+  });
+  // Search
+  const sq = document.getElementById('search-q');
+  if (sq) sq.placeholder = t('search_placeholder');
+  // Reload current tab data to refresh dynamic text
+  const activeTab = document.querySelector('.nav-tab.active');
+  if (activeTab) {
+    const tabName = activeTab.dataset.tab;
+    if (tabName === 'overview') loadOverview();
+    else if (tabName === 'health') loadHealth();
+  }
+}
+
 const API = window.location.origin;
 let accessToken = localStorage.getItem('cortex_access_token');
 let refreshToken = localStorage.getItem('cortex_refresh_token');
@@ -656,12 +803,111 @@ async function loadOverview() {
         }
       }
 
+      // Store for hover interaction
+      window._tlPts = pts;
+      window._tlData = tl;
+      window._tlMax = max;
+
+      // Mouse hover on timeline
+      const tlContainer = document.getElementById('timeline-chart');
+      const tlTooltip = document.getElementById('tl-tooltip');
+      const tlCrosshair = document.getElementById('tl-crosshair');
+      const tlDot = document.getElementById('tl-dot');
+
+      tlContainer.onmousemove = (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const mx = e.clientX - rect.left;
+        if (!window._tlPts || !window._tlPts.length) return;
+
+        // Find nearest point
+        let nearest = 0, minDist = Infinity;
+        for (let i = 0; i < window._tlPts.length; i++) {
+          const d = Math.abs(window._tlPts[i].x - mx);
+          if (d < minDist) { minDist = d; nearest = i; }
+        }
+
+        const pt = window._tlPts[nearest];
+        const d = window._tlData[nearest];
+
+        // Position crosshair
+        tlCrosshair.style.display = 'block';
+        tlCrosshair.style.left = pt.x + 'px';
+
+        // Position dot
+        tlDot.style.display = 'block';
+        tlDot.style.left = pt.x + 'px';
+        tlDot.style.top = pt.y + 'px';
+
+        // Position tooltip
+        tlTooltip.style.display = 'block';
+        const tipLeft = pt.x + 14;
+        const flipLeft = tipLeft + 120 > tw;
+        tlTooltip.style.left = flipLeft ? (pt.x - 130) + 'px' : tipLeft + 'px';
+        document.getElementById('tl-tip-date').textContent = d.day;
+        document.getElementById('tl-tip-count').textContent = d.count + ' memories';
+      };
+
+      tlContainer.onmouseleave = () => {
+        tlTooltip.style.display = 'none';
+        tlCrosshair.style.display = 'none';
+        tlDot.style.display = 'none';
+      };
+
       // Sparkline in the memory KPI card
       const spark = document.getElementById('stat-total-sparkline');
       spark.innerHTML = tl.slice(-14).map(d =>
         `<div style="flex:1;background:var(--accent);opacity:0.5;border-radius:1px;height:${Math.max((d.count/max)*100,4)}%;min-height:2px"></div>`
       ).join('');
     }
+    // Weekly summary
+    if (stats && timeline && timeline.timeline) {
+      const tl = timeline.timeline;
+      const now = new Date();
+      const sevenDaysAgo = new Date(now - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      const last7 = tl.filter(d => d.day >= sevenDaysAgo);
+      const total7 = last7.reduce((a, d) => a + d.count, 0);
+      const avg7 = last7.length ? Math.round(total7 / last7.length) : 0;
+      const peakDay = last7.length ? last7.reduce((a, b) => b.count > a.count ? b : a) : null;
+      const total30 = tl.reduce((a, d) => a + d.count, 0);
+      const activeDays = tl.filter(d => d.count > 0).length;
+
+      // Trend: compare last 7 vs previous 7
+      const fourteenDaysAgo = new Date(now - 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      const prev7 = tl.filter(d => d.day >= fourteenDaysAgo && d.day < sevenDaysAgo);
+      const totalPrev7 = prev7.reduce((a, d) => a + d.count, 0);
+      let trend = '';
+      if (totalPrev7 > 0) {
+        const change = Math.round(((total7 - totalPrev7) / totalPrev7) * 100);
+        if (change > 10) trend = ` <strong style="color:var(--green)">+${change}%</strong> ${t('ws_vs_prev')}.`;
+        else if (change < -10) trend = ` <strong style="color:var(--red)">${change}%</strong> ${t('ws_vs_prev')}.`;
+        else trend = ` ${t('ws_same')}`;
+      }
+
+      // Top sources in last 7 days
+      const topSources = Object.entries(stats.bySource || {}).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k]) => k);
+
+      // Build summary
+      let summary = `${t('ws_captured')} <strong style="color:var(--accent)">${total7} ${t('memories_label')}</strong> ${t('ws_last7')}`;
+      summary += total7 > 0 ? ` (${t('ws_avg')} ${avg7}/${t('ws_day')}).` : '.';
+      summary += trend;
+      if (peakDay && peakDay.count > 0) {
+        summary += ` ${t('ws_peak')} <strong>${peakDay.day}</strong> ${t('ws_with')} ${peakDay.count} ${t('ws_entries')}.`;
+      }
+      if (topSources.length) {
+        summary += ` ${t('ws_top_sources')}: <strong>${topSources.join('</strong>, <strong>')}</strong>.`;
+      }
+      if (entities && entities.entities) {
+        const topE = entities.entities.sort((a, b) => (b.mentionCount || 0) - (a.mentionCount || 0)).slice(0, 3);
+        if (topE.length) {
+          summary += ` ${t('ws_most_mentioned')}: <strong>${topE.map(e => e.canonicalName || e.name).join('</strong>, <strong>')}</strong>.`;
+        }
+      }
+      summary += ` ${t('ws_total_activity')}: ${activeDays} ${t('ws_active_days')} ${tl.length} ${t('ws_in_last')}.`;
+
+      document.getElementById('weekly-summary-text').innerHTML = summary;
+      document.getElementById('weekly-summary').style.display = 'block';
+    }
+
     // Health sub-text
     if (health && health.checks) {
       const greenCount = health.checks.filter(c => statusColor(c.status) === 'green').length;
@@ -1143,6 +1389,9 @@ function animateNumber(id, target, suffix = '') {
 }
 
 // ---- INIT ----
+document.getElementById('lang-btn').textContent = currentLang.toUpperCase();
+applyLang();
+
 (async function init() {
   if (accessToken) {
     const ok = await doRefresh();
