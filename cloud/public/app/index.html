@@ -252,14 +252,24 @@ tr.clickable{cursor:pointer}
         </div>
       </div>
 
-      <!-- Weekly summary + Timeline -->
+      <!-- Weekly content analysis + Timeline -->
       <div class="card" style="margin-bottom:16px;padding-bottom:12px">
-        <div id="weekly-summary" style="margin-bottom:16px;padding:14px 18px;background:linear-gradient(135deg,rgba(197,255,61,0.05),rgba(0,240,255,0.03));border:1px solid rgba(197,255,61,0.1);border-radius:10px;font-size:13px;color:#ccc;line-height:1.7;display:none">
-          <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;font-size:11px;color:var(--mute);font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:1px">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-            Weekly Insight
+        <div id="weekly-summary" style="margin-bottom:16px;padding:16px 20px;background:linear-gradient(135deg,rgba(197,255,61,0.05),rgba(0,240,255,0.03));border:1px solid rgba(197,255,61,0.1);border-radius:10px;font-size:13px;color:#ccc;line-height:1.7;display:none">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--mute);font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:1px">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+              <span id="ws-title">Weekly Insight</span>
+            </div>
+            <span id="ws-count" style="font-size:10px;color:var(--mute);font-family:'JetBrains Mono',monospace"></span>
           </div>
-          <span id="weekly-summary-text"></span>
+          <div id="weekly-summary-text" style="margin-bottom:12px"></div>
+          <!-- Topic pills -->
+          <div id="ws-topics" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px"></div>
+          <!-- Highlights -->
+          <div id="ws-highlights" style="display:none">
+            <div style="font-size:10px;color:var(--mute);font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px" id="ws-highlights-title">Highlights</div>
+            <div id="ws-highlights-list"></div>
+          </div>
         </div>
         <h3 style="display:flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Activity (30 days)</h3>
         <div id="timeline-chart" style="height:140px;position:relative;cursor:crosshair">
@@ -711,12 +721,13 @@ document.querySelectorAll('.nav-tab').forEach(t => t.addEventListener('click', (
 // ---- OVERVIEW ----
 async function loadOverview() {
   try {
-    const [stats, health, salience, timeline, entities] = await Promise.all([
+    const [stats, health, salience, timeline, entities, digest] = await Promise.all([
       api('/api/brain/stats').catch(() => null),
       api('/api/brain/health').catch(() => null),
       api('/api/brain/salience').catch(() => null),
       api('/api/brain/timeline').catch(() => null),
       api('/api/brain/entities').catch(() => null),
+      api('/api/brain/weekly-digest').catch(() => null),
     ]);
 
     if (stats) {
@@ -859,52 +870,41 @@ async function loadOverview() {
         `<div style="flex:1;background:var(--accent);opacity:0.5;border-radius:1px;height:${Math.max((d.count/max)*100,4)}%;min-height:2px"></div>`
       ).join('');
     }
-    // Weekly summary
-    if (stats && timeline && timeline.timeline) {
-      const tl = timeline.timeline;
-      const now = new Date();
-      const sevenDaysAgo = new Date(now - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-      const last7 = tl.filter(d => d.day >= sevenDaysAgo);
-      const total7 = last7.reduce((a, d) => a + d.count, 0);
-      const avg7 = last7.length ? Math.round(total7 / last7.length) : 0;
-      const peakDay = last7.length ? last7.reduce((a, b) => b.count > a.count ? b : a) : null;
-      const total30 = tl.reduce((a, d) => a + d.count, 0);
-      const activeDays = tl.filter(d => d.count > 0).length;
+    // Weekly content analysis
+    if (digest && digest.memoriesAnalyzed > 0) {
+      document.getElementById('ws-title').textContent = t('weekly_insight');
+      document.getElementById('ws-count').textContent = digest.memoriesAnalyzed + ' ' + t('memories_label') + ' analyzed';
 
-      // Trend: compare last 7 vs previous 7
-      const fourteenDaysAgo = new Date(now - 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-      const prev7 = tl.filter(d => d.day >= fourteenDaysAgo && d.day < sevenDaysAgo);
-      const totalPrev7 = prev7.reduce((a, d) => a + d.count, 0);
-      let trend = '';
-      if (totalPrev7 > 0) {
-        const change = Math.round(((total7 - totalPrev7) / totalPrev7) * 100);
-        if (change > 10) trend = ` <strong style="color:var(--green)">+${change}%</strong> ${t('ws_vs_prev')}.`;
-        else if (change < -10) trend = ` <strong style="color:var(--red)">${change}%</strong> ${t('ws_vs_prev')}.`;
-        else trend = ` ${t('ws_same')}`;
+      // Main digest text
+      let text = '';
+      if (digest.projects && digest.projects.length) {
+        text += `<strong style="color:var(--orange)">${digest.projects.slice(0,3).join('</strong>, <strong style="color:var(--orange)">')}</strong> — `;
+      }
+      if (digest.digest) {
+        text += digest.digest;
+      }
+      document.getElementById('weekly-summary-text').innerHTML = text;
+
+      // Topic pills
+      const topicsEl = document.getElementById('ws-topics');
+      if (digest.topics && digest.topics.length) {
+        topicsEl.innerHTML = digest.topics.slice(0, 10).map(tp =>
+          `<span style="padding:3px 10px;border-radius:12px;font-size:11px;font-family:'JetBrains Mono',monospace;background:rgba(197,255,61,${0.05 + tp.count * 0.02});border:1px solid rgba(197,255,61,${0.1 + tp.count * 0.03});color:var(--accent)">${esc(tp.word)} <span style="color:var(--mute);font-size:10px">${tp.count}</span></span>`
+        ).join('');
       }
 
-      // Top sources in last 7 days
-      const topSources = Object.entries(stats.bySource || {}).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k]) => k);
+      // Highlights
+      if (digest.highlights && digest.highlights.length) {
+        document.getElementById('ws-highlights').style.display = 'block';
+        document.getElementById('ws-highlights-list').innerHTML = digest.highlights.map(h =>
+          `<div style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12px">
+            ${badge(h.kind)}
+            <span style="flex:1;color:var(--fg)">${esc(h.title)}</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent)">${h.salience.toFixed(1)}</span>
+          </div>`
+        ).join('');
+      }
 
-      // Build summary
-      let summary = `${t('ws_captured')} <strong style="color:var(--accent)">${total7} ${t('memories_label')}</strong> ${t('ws_last7')}`;
-      summary += total7 > 0 ? ` (${t('ws_avg')} ${avg7}/${t('ws_day')}).` : '.';
-      summary += trend;
-      if (peakDay && peakDay.count > 0) {
-        summary += ` ${t('ws_peak')} <strong>${peakDay.day}</strong> ${t('ws_with')} ${peakDay.count} ${t('ws_entries')}.`;
-      }
-      if (topSources.length) {
-        summary += ` ${t('ws_top_sources')}: <strong>${topSources.join('</strong>, <strong>')}</strong>.`;
-      }
-      if (entities && entities.entities) {
-        const topE = entities.entities.sort((a, b) => (b.mentionCount || 0) - (a.mentionCount || 0)).slice(0, 3);
-        if (topE.length) {
-          summary += ` ${t('ws_most_mentioned')}: <strong>${topE.map(e => e.canonicalName || e.name).join('</strong>, <strong>')}</strong>.`;
-        }
-      }
-      summary += ` ${t('ws_total_activity')}: ${activeDays} ${t('ws_active_days')} ${tl.length} ${t('ws_in_last')}.`;
-
-      document.getElementById('weekly-summary-text').innerHTML = summary;
       document.getElementById('weekly-summary').style.display = 'block';
     }
 

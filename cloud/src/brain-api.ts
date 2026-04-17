@@ -169,6 +169,98 @@ export function createBrainApiRoutes(): Hono {
     }
   })
 
+  // GET /weekly-digest — content analysis of last 7 days memories
+  api.get('/weekly-digest', (c) => {
+    const { id } = c.get('user') as { id: string }
+    try {
+      return c.json(withBrain(id, (mem) => {
+        const db = (mem as any).store?.raw?.()
+        if (!db) return { digest: '' }
+
+        const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
+
+        // Get recent memories
+        const recent = db.prepare(`
+          SELECT title, body, kind, source, salience
+          FROM memory_index
+          WHERE created > ?
+          ORDER BY salience DESC
+          LIMIT 50
+        `).all(sevenDaysAgo) as Array<{ title: string; body: string; kind: string; source: string; salience: number }>
+
+        if (!recent.length) return { digest: '', topics: [], decisions: [], projects: [] }
+
+        // Extract topics (most common words in titles, excluding stopwords)
+        const stopwords = new Set(['the','a','an','is','are','was','were','be','been','being','have','has','had','do','does','did','will','would','shall','should','may','might','must','can','could','of','in','to','for','with','on','at','by','from','as','into','through','during','before','after','above','below','between','but','and','or','nor','not','no','so','if','then','than','too','very','just','about','up','out','off','over','under','again','further','once','that','this','these','those','which','what','who','whom','when','where','why','how','all','each','every','both','few','more','most','other','some','such','only','own','same','de','do','da','dos','das','em','um','uma','e','o','os','as','que','para','com','por','no','na','nos','nas','se','como','mais','ou','seu','sua','ao','aos','foi','ser','ter','tem','est','isso','este','esta','esse','essa','pelo','pela','entre'])
+        const wordCount: Record<string, number> = {}
+        for (const m of recent) {
+          const words = (m.title + ' ' + (m.body || '').substring(0, 200)).toLowerCase().replace(/[^a-zA-ZÀ-ú\s]/g, '').split(/\s+/)
+          for (const w of words) {
+            if (w.length > 3 && !stopwords.has(w)) {
+              wordCount[w] = (wordCount[w] || 0) + 1
+            }
+          }
+        }
+        const topics = Object.entries(wordCount)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 12)
+          .map(([word, count]) => ({ word, count }))
+
+        // Extract decisions
+        const decisions = recent
+          .filter(m => m.kind === 'decision')
+          .slice(0, 5)
+          .map(m => m.title)
+
+        // Extract projects mentioned
+        const projects = recent
+          .filter(m => m.kind === 'project')
+          .slice(0, 5)
+          .map(m => m.title)
+
+        // Top high-salience memories (the most important things)
+        const highlights = recent
+          .filter(m => m.salience >= 1.5)
+          .slice(0, 5)
+          .map(m => ({ title: m.title, kind: m.kind, salience: m.salience }))
+
+        // Kind distribution of recent memories
+        const kindDist: Record<string, number> = {}
+        for (const m of recent) {
+          kindDist[m.kind] = (kindDist[m.kind] || 0) + 1
+        }
+
+        // Build natural language digest
+        let digest = ''
+        if (topics.length >= 3) {
+          digest += `Main themes: ${topics.slice(0, 5).map(t => t.word).join(', ')}. `
+        }
+        if (projects.length) {
+          digest += `Active projects: ${projects.join(', ')}. `
+        }
+        if (decisions.length) {
+          digest += `Key decisions: ${decisions.join('; ')}. `
+        }
+        if (highlights.length) {
+          digest += `Top highlights: ${highlights.map(h => h.title).join(', ')}.`
+        }
+
+        return {
+          digest,
+          topics,
+          decisions,
+          projects,
+          highlights,
+          kindDistribution: kindDist,
+          memoriesAnalyzed: recent.length,
+        }
+      }))
+    } catch (e: any) {
+      if (e.message === 'NO_BRAIN') return noBrainError(c)
+      throw e
+    }
+  })
+
   // POST /cycle — trigger brain cycle
   api.post('/cycle', async (c) => {
     const { id } = c.get('user') as { id: string }
